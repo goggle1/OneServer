@@ -6,6 +6,12 @@
 #define EVENT_READ	0x00000001
 #define EVENT_WRITE	0x00000002
 
+#define EPOLL_SIZE 	1000000
+#define MAX_EVENTS	10000
+// ms
+#define WAIT_PERIOD	1000
+
+
 class Events
 {
 public:
@@ -17,10 +23,11 @@ public:
 	int ModifyWatch(int fd, u_int32_t events, void* handler);
 	int DeleteWatch(int fd);
 	
-	static void* Run(void* argp);
-protected:
 	int	m_epoll_fd;
 	//int m_fd_num;
+	
+protected:
+
 };
 
 

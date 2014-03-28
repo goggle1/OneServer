@@ -3,29 +3,30 @@
 #include <sys/prctl.h>
 #include <pthread.h>
 
-#include "BaseServer/events.h"
+#include "BaseServer/EventThread.h"
 #include "BaseServer/TcpServer.h"
+#include "BaseServer/TaskThreadPool.h"
 
-Events* g_events = NULL;
+EventThread* 	g_event_thread 		= NULL;
+TaskThreadPool* g_task_thread_pool 	= NULL;
 
 int start_thread_event()
 {
 	int ret = 0;
 
-	g_events = new Events();
-	ret = g_events->Init();
-	if(ret < 0)
-	{
-		fprintf(stderr, "%s: events init error, return %d\n", __FUNCTION__, ret);
-	}
+	g_event_thread = new EventThread();
+	g_event_thread->Start();
 	
-	pthread_t thread_id = 0;
-	ret = pthread_create(&thread_id, NULL, Events::Run, (void*)g_events);
-	if(ret < 0)
-	{
-		fprintf(stderr, "%s: pthread_create error, return %d\n", __FUNCTION__, ret);
-	}
+	return ret;
+}
+
+int start_thread_workers()
+{
+	int ret = 0;
 	
+	g_task_thread_pool = new TaskThreadPool();
+	g_task_thread_pool->Init();
+
 	return ret;
 }
 
@@ -41,10 +42,10 @@ int start_server()
 	{
 		fprintf(stderr, "%s: server init error, return %d\n", __FUNCTION__, ret);
 	}
-	ret = g_events->AddWatch(serverp->GetFd(), EVENT_READ, serverp);
+	ret = g_event_thread->m_events.AddWatch(serverp->GetFd(), EVENT_READ, serverp);
 	if(ret < 0)
 	{
-		fprintf(stderr, "%s: g_events AddWatch, return %d\n", __FUNCTION__, ret);
+		fprintf(stderr, "%s: events AddWatch, return %d\n", __FUNCTION__, ret);
 	}
 	
 	return ret;
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
 	
 	int ret = 0;
 	ret = start_thread_event();
-	//ret = start_thread_workers();
+	ret = start_thread_workers();
 	//ret = start_thread_timer();
 
 	ret = start_server();

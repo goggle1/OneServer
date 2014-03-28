@@ -4,11 +4,15 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
        
 #include "TcpServer.h"
 
 TcpServer::TcpServer()
 {
+	m_fd = -1;
 }
 
 TcpServer::~TcpServer()
@@ -18,6 +22,40 @@ TcpServer::~TcpServer()
 int TcpServer::Run()
 {
 	int ret = 0;
+
+	fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
+
+	while(1)
+	{
+		struct sockaddr_in addr;
+		socklen_t size = sizeof(addr);
+		int a_fd = accept(m_fd, (struct sockaddr*)&addr, &size);
+		if (a_fd == -1)
+		{
+	        int acceptError = errno;
+	        fprintf(stderr, "%s: errno=%d, %s\n", __PRETTY_FUNCTION__, acceptError, strerror(acceptError));
+	        if (acceptError == EAGAIN)
+	        {   
+	            return 0;
+	        }		        
+			else if (acceptError == EMFILE || acceptError == ENFILE)
+	        {	
+				exit (-1);	
+	        }
+	        else
+	        {
+	        	// do nothing.
+	        }
+	   	}
+	    else
+	    {
+	    	TcpSession* sessionp = this->GetSession(a_fd, &addr);
+		    if (sessionp == NULL)
+		    { 
+		        close(a_fd);		        
+		    }		    
+	    }
+    }
 	
 	return ret;
 }
@@ -70,3 +108,11 @@ int TcpServer::Init(u_int32_t ip, u_int16_t port)
 	
 	return ret;
 }
+
+TcpSession* TcpServer::GetSession(int fd, struct sockaddr_in * addr)
+{
+	TcpSession* sessionp = new TcpSession(fd, addr);
+	sessionp->Init();
+	return sessionp;
+}
+

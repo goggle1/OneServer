@@ -1,14 +1,8 @@
-#include <sys/prctl.h>
+
 #include <unistd.h>
 #include <sys/epoll.h>
 
-#include "EventHandler.h"
 #include "events.h"
-
-#define EPOLL_SIZE 	1000000
-#define MAX_EVENTS	10000
-// ms
-#define WAIT_PERIOD	1000
 
 Events::Events()
 {
@@ -52,24 +46,5 @@ int Events::AddWatch(int fd, u_int32_t events, void* handler)
 	return ret;
 }
 
-void* Events::Run(void* argp)
-{
-	prctl(PR_SET_NAME, "oneserver_events");
-
-	Events* eventsp = (Events*)argp;
-
-	struct epoll_event events[MAX_EVENTS];
-	while(1)
-	{		
-		int num = epoll_wait(eventsp->m_epoll_fd, events, MAX_EVENTS, WAIT_PERIOD);
-		for(int index = 0; index < num; ++index) 
-		{
-			EventHandler* handlerp = (EventHandler*)events[index].data.ptr;
-			handlerp->EnqueEvents(events[index].events);
-		}
-	}	
-	
-	return NULL;
-}
 
 
