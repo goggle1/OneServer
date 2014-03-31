@@ -8,13 +8,12 @@ class TcpServer : public EventHandler
 {
 public:
 	TcpServer();
-	~TcpServer();
-	virtual int Run();
-
+	virtual ~TcpServer();
 	int 	Init(u_int32_t ip, u_int16_t port);
 	int		GetFd()	{ return m_fd; };
-
-	virtual TcpSession*   GetSession(int fd, struct sockaddr_in* addr);
+	TcpSession*   GetSession(int fd, struct sockaddr_in* addr);
+	
+	virtual int Run();	
 
 protected:
 	int		m_fd;

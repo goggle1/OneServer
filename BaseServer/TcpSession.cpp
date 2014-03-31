@@ -13,13 +13,16 @@
 
 TcpSession::TcpSession(int fd, struct sockaddr_in * addr)
 {
-	m_fd = fd;
+	m_fd = fd;	
 	memcpy(&m_addr, addr, sizeof(struct sockaddr_in));
+	m_StrReceived.Ptr = m_RequestBuffer;
+	m_StrReceived.Len = 0;
 	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
 }
 
 TcpSession::~TcpSession()
 {
+	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
 }
 
 int TcpSession::Init()
@@ -48,24 +51,24 @@ int TcpSession::Init()
 
 int TcpSession::Run()
 {
-	char buf[1024];
+	char r_buffer[1024];
 	size_t len = 1024;
+
+	char s_buffer[1024];
+	snprintf(s_buffer, 1024, "%s: I got it.\n", __PRETTY_FUNCTION__);
+	size_t s_len = strlen(s_buffer);
 	
 	while(1)
 	{
-		ssize_t ret = recv(m_fd, buf, len, 0);
-		if(ret > 0)
+		ssize_t r_ret = recv(m_fd, r_buffer, len, 0);
+		if(r_ret == 0)
 		{
-			fprintf(stdout, "%s: recv %ld, %s\n", __PRETTY_FUNCTION__, ret, buf);
-		}
-		else if(ret == 0)
-		{
-			fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, ret, m_fd);
+			fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
 			close(m_fd);
 			m_fd = -1;
 			return -1;
 		}
-		else
+		else if(r_ret < 0)
 		{
 			int err = errno;
 			fprintf(stderr, "%s: errno=%d, %s\n", __PRETTY_FUNCTION__, err, strerror(err));
@@ -75,12 +78,33 @@ int TcpSession::Run()
 			}
 			else
 			{
-				fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, ret, m_fd);
+				fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
 				close(m_fd);
 				m_fd = -1;
 				return -1;
 			}
 		}
+		fprintf(stdout, "%s: recv %ld, %s\n", __PRETTY_FUNCTION__, r_ret, r_buffer);
+		
+		ssize_t s_ret = send(m_fd, s_buffer, s_len, 0);	
+		if(s_ret == -1)
+		{
+			int err = errno;
+			fprintf(stderr, "%s: errno=%d, %s\n", __PRETTY_FUNCTION__, err, strerror(err));
+			if(err == EAGAIN) // or other errno
+			{
+				return 0;
+			}
+			else
+			{
+				fprintf(stdout, "%s: send %ld, close fd=%d\n", __PRETTY_FUNCTION__, s_ret, m_fd);
+				close(m_fd);
+				m_fd = -1;
+				return -1;
+			}
+		}
+		fprintf(stdout, "%s: send %ld, return %ld, %s\n", __PRETTY_FUNCTION__, s_len, s_ret, s_buffer);
+		
 	}
 	
 	return 0;

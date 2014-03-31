@@ -9,7 +9,7 @@ class EventHandler : public Task
 {
 public:
 	EventHandler();
-	~EventHandler();
+	virtual ~EventHandler();
 	int EnqueEvents(u_int32_t events);
 	
 	virtual int Run();

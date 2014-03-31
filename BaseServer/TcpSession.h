@@ -2,18 +2,33 @@
 #define __TCPSESSION_H__
 
 #include <netinet/in.h>
+
+#include "StrPtrLen.h"
 #include "EventHandler.h"
+
+#define REQUEST_BUFF_SIZE	(1024*16)
+#define RESPONSE_BUFF_SIZE	(1024*16)
 
 class TcpSession : public EventHandler
 {
 public:
 	TcpSession(int fd, struct sockaddr_in* addr);
-	~TcpSession();
+	virtual ~TcpSession();
 	int Init();
-	virtual int Run();
+	virtual int Run();	
+	
 protected:
-	int m_fd;
-	struct sockaddr_in m_addr;
+	int 				m_fd;
+	struct sockaddr_in 	m_addr;
+	
+	char				m_RequestBuffer[REQUEST_BUFF_SIZE];
+	StrPtrLen			m_StrReceived;
+	StrPtrLen			m_StrRequest;
+
+	char				m_ResponseBuffer[RESPONSE_BUFF_SIZE];			
+	StrPtrLen			m_StrResponse; 
+	StrPtrLen			m_StrRemained;
+	
 };
 
 #endif

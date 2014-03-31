@@ -41,7 +41,11 @@ int TaskThread::Entry()
 		{
 			Task* taskp = (Task*)elmentp;
 			taskp->Detach();
-			taskp->Run();			
+			int ret = taskp->Run();			
+			if(ret == -1)
+			{
+				delete taskp;
+			}
 		}
 	}
 	

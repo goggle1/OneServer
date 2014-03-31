@@ -7,7 +7,7 @@ class Task
 {
 public:
 	Task();
-	~Task();
+	virtual ~Task();
 	int	Signal();
 	void Detach();
 	virtual int Run();
