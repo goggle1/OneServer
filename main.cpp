@@ -3,6 +3,9 @@
 #include <sys/prctl.h>
 #include <pthread.h>
 
+// todo: will be deleted.
+#include "BaseServer/heap.h"
+
 #include "BaseServer/EventThread.h"
 #include "BaseServer/TaskThreadPool.h"
 #include "BaseServer/TcpServer.h"
@@ -73,6 +76,9 @@ int main(int argc, char* argv[])
 	// 2). N worker thread.
 	// 3). 1 timer thread.
 	prctl(PR_SET_NAME, "oneserver_main");
+
+	OSHeap::Test();
+	return 0;
 	
 	int ret = 0;
 	ret = start_thread_event();
