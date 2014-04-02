@@ -15,6 +15,8 @@ public:
 	bool 	Equal(const char* compare) const;
 	bool 	EqualIgnoreCase(const char* compare, const int len) const;
     bool 	EqualIgnoreCase(const StrPtrLen &compare) const { return EqualIgnoreCase(compare.Ptr, compare.Len); }
+	// convert to a "NEW'd" zero terminated char array
+    char*   GetAsCString() const;
 
 	char* 	Ptr;
 	int   	Len;

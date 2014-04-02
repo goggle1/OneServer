@@ -46,6 +46,15 @@ int TaskThread::Entry()
 			{
 				delete taskp;
 			}
+			else if(ret == 0)
+			{
+				// do nothing.
+			}
+			else
+			{
+				// add to timer heap.
+				
+			}
 		}
 	}
 	

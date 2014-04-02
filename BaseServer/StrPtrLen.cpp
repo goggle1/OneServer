@@ -86,3 +86,17 @@ bool StrPtrLen::EqualIgnoreCase(const char* compare, const int len) const
     }
     return false;
 }
+
+char* StrPtrLen::GetAsCString() const
+{
+    // convert to a "NEW'd" zero terminated char array
+    // caler is reponsible for the newly allocated memory
+    char *theString = new char[Len+1];
+    
+    if ( Ptr && Len > 0 )
+        ::memcpy( theString, Ptr, Len );
+    
+    theString[Len] = 0;
+    
+    return theString;
+}
