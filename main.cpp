@@ -75,10 +75,10 @@ int main(int argc, char* argv[])
 	// 1). 1 events thread.
 	// 2). N worker thread.
 	// 3). 1 timer thread.
+	// 4). start server
+	// 5). do nothing forever
+	
 	prctl(PR_SET_NAME, "oneserver_main");
-
-	OSHeap::Test();
-	return 0;
 	
 	int ret = 0;
 	ret = start_thread_event();

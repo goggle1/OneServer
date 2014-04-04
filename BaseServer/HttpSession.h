@@ -23,6 +23,7 @@ protected:
 	int 		ResponseError(HTTPStatusCode status_code);
 	int		    RecvData();
 	int		    SendData();
+	void        MoveOnRequest();
 	
 	HttpRequest 	m_Request;
 	HTTPStatusCode 	fHttpStatus;

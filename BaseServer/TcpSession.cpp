@@ -21,8 +21,10 @@ TcpSession::TcpSession(int fd, struct sockaddr_in * addr)
 }
 
 TcpSession::~TcpSession()
-{
+{	
 	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
+	close(m_fd);
+	m_fd = -1;
 }
 
 int TcpSession::Init()
@@ -64,8 +66,6 @@ int TcpSession::Run()
 		if(r_ret == 0)
 		{
 			fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
-			close(m_fd);
-			m_fd = -1;
 			return -1;
 		}
 		else if(r_ret < 0)
@@ -79,8 +79,6 @@ int TcpSession::Run()
 			else
 			{
 				fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
-				close(m_fd);
-				m_fd = -1;
 				return -1;
 			}
 		}
@@ -98,8 +96,6 @@ int TcpSession::Run()
 			else
 			{
 				fprintf(stdout, "%s: send %ld, close fd=%d\n", __PRETTY_FUNCTION__, s_ret, m_fd);
-				close(m_fd);
-				m_fd = -1;
 				return -1;
 			}
 		}

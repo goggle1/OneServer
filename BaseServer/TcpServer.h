@@ -1,10 +1,10 @@
 #ifndef __TCPSERVER_H__
 #define __TCPSERVER_H__
 
+#include "task.h"
 #include "TcpSession.h"
-#include "EventHandler.h"
 
-class TcpServer : public EventHandler
+class TcpServer : public Task
 {
 public:
 	TcpServer();

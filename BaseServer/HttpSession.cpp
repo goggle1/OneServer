@@ -332,8 +332,11 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
     fStrResponse((char*)fResponseBuffer, 0),
     fStrRemained(fStrResponse),
     fResponse(NULL, 0)    
-{
+{	
 	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
+	fHaveRange 	= false;
+	fRangeStart = 0;
+	fRangeStop 	= -1;
 }
 
 HttpSession::~HttpSession()
@@ -370,8 +373,6 @@ int HttpSession::RecvData()
 		if(recv_buff_size <= 0)
 		{
 			fprintf(stderr, "%s: recv buffer full, recv_buff_size=%ld\n", __PRETTY_FUNCTION__, recv_buff_size);
-			close(m_fd);
-			m_fd = -1;
 			return -1;
 		}
 		
@@ -379,8 +380,6 @@ int HttpSession::RecvData()
 		if(recv_ret == 0)
 		{
 			fprintf(stdout, "%s: recv=%ld, close fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
-			close(m_fd);
-			m_fd = -1;
 			return -1;
 		}
 		else if(recv_ret < 0)
@@ -394,8 +393,6 @@ int HttpSession::RecvData()
 			else
 			{
 				fprintf(stderr, "%s: recv=%ld, close fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
-				close(m_fd);
-				m_fd = -1;
 				return -1;
 			}
 		}
@@ -454,6 +451,16 @@ int HttpSession::SendData()
     }
 
     return 0;
+}
+
+void HttpSession::MoveOnRequest()
+{
+    StrPtrLen   strRemained;
+    strRemained.Set(m_StrRequest.Ptr+m_StrRequest.Len, m_StrReceived.Len-m_StrRequest.Len);
+        
+    ::memmove(m_RequestBuffer, strRemained.Ptr, strRemained.Len);
+    m_StrReceived.Set(m_RequestBuffer, strRemained.Len);
+    m_StrRequest.Set(m_RequestBuffer, 0);
 }
 
 
@@ -650,6 +657,8 @@ int HttpSession::DoRequest()
 	
 	m_Request.Clear();
 	m_Request.Parse(&m_StrRequest);
+	MoveOnRequest();
+	
 	if(m_Request.fMethod == httpGetMethod)
 	{
 		ret = DoGet();
@@ -688,6 +697,11 @@ int HttpSession::DoRead()
 		if(ret < 0)
 		{
 			return ret;
+		}
+		
+		if(fFd != -1)
+		{
+			return 1;
 		}
 	}	
 
@@ -761,15 +775,15 @@ int HttpSession::Run()
 		u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);
 		u_int32_t events = temp;
 		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
-		if(events | EVENT_READ)
+		if(events & EVENT_READ)
 		{
 			ret = DoRead();			
 		}
-		else if(events | EVENT_CONTINUE)
+		else if(events & EVENT_CONTINUE)
 		{
 			ret = DoContinue();			
 		}
-		else if(events | EVENT_TIMEOUT)
+		else if(events & EVENT_TIMEOUT)
 		{
 			//ret = DoTimeout();			
 		}
@@ -780,6 +794,6 @@ int HttpSession::Run()
 		}
 	}
 	
-	return 0;
+	return ret;
 }
 

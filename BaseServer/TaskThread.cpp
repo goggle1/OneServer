@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <sys/prctl.h>
 
+#include "OS.h"
+#include "events.h"
 #include "TaskThread.h"
 
 TaskThread::TaskThread()
@@ -26,37 +28,68 @@ int TaskThread::Signal()
 	return 0;
 }
 
+Task* TaskThread::WaitForTask()
+{
+	while(1)
+	{	
+		OSHeapElem* elemp = fHeap.PeekMin();
+        if (elemp != NULL)
+        {    
+        	int64_t theCurrentTime = OS::Milliseconds(); 
+        	int64_t theTaskTime = elemp->GetValue();
+        	if(theTaskTime <= theCurrentTime)
+        	{
+        		elemp = fHeap.ExtractMin();
+        		Task* taskp = (Task*)elemp->GetEnclosingObject();     
+        		taskp->EnqueEvents(EVENT_CONTINUE);
+        		return taskp;
+            }
+        }
+        
+		void* elementp = dequeh_remove_head(&m_task_queue);
+		if(elementp == NULL)
+		{
+			usleep(10);
+			continue;
+		}
+		Task* taskp = (Task*)elementp;
+		return taskp;
+	}
+
+	return NULL;
+}
+
 int TaskThread::Entry()
 {
 	prctl(PR_SET_NAME, "oneserver_work");
 	
-	while(1)
-	{
-		void* elmentp = dequeh_remove_head(&m_task_queue);
-		if(elmentp == NULL)
+	Task* taskp = NULL;
+    
+    while(1) 
+    {
+        taskp = this->WaitForTask();
+        if (taskp == NULL)
+        {
+        	return -1;
+        }
+        		
+		int task_ret = taskp->Run();			
+		if(task_ret == -1)
 		{
-			sleep(1);
+			delete taskp;
+		}
+		else if(task_ret == 0)
+		{
+			taskp->Detach();
 		}
 		else
 		{
-			Task* taskp = (Task*)elmentp;
-			taskp->Detach();
-			int ret = taskp->Run();			
-			if(ret == -1)
-			{
-				delete taskp;
-			}
-			else if(ret == 0)
-			{
-				// do nothing.
-			}
-			else
-			{
-				// add to timer heap.
-				
-			}
-		}
+			taskp->fTimerHeapElem.SetValue(OS::Milliseconds() + task_ret);
+            fHeap.Insert(&taskp->fTimerHeapElem);			
+		}	
+		
 	}
 	
 	return 0;
 }
+

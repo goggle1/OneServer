@@ -4,9 +4,11 @@
 #include "TaskThread.h"
 #include "TaskThreadPool.h"
 
-Task::Task()
+Task::Task() : 
+	fTimerHeapElem(this)
 {
 	m_task_thread = NULL;
+	dequeh_init(&m_events_queue);
 	//fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
 }
 
@@ -37,6 +39,19 @@ void Task::Detach()
 {
 	m_task_thread = NULL;
 }
+
+int Task::EnqueEvents(u_int32_t events)
+{	
+	fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);	
+	
+	// events into deque.
+	dequeh_append(&m_events_queue, reinterpret_cast<void*>(events));
+	// signal (choose one task thread, into task)
+	Signal();
+	
+	return 0;
+}
+
 
 int Task::Run()
 {

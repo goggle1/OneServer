@@ -2,6 +2,7 @@
 #define __HEAP_H__
 
 #include <sys/types.h>
+#include <string.h>
 
 class OSHeapElem;
 

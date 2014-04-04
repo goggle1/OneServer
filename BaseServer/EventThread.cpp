@@ -1,7 +1,7 @@
 #include <sys/prctl.h>
 #include <sys/epoll.h>
 
-#include "EventHandler.h"
+#include "task.h"
 #include "EventThread.h"
 
 EventThread::EventThread()
@@ -23,8 +23,9 @@ int EventThread::Entry()
 		int num = epoll_wait(m_events.m_epoll_fd, events, MAX_EVENTS, WAIT_PERIOD);
 		for(int index = 0; index < num; ++index) 
 		{
-			EventHandler* handlerp = (EventHandler*)events[index].data.ptr;
-			handlerp->EnqueEvents(events[index].events);
+			Task* taskp = (Task*)events[index].data.ptr;
+			taskp->EnqueEvents(events[index].events);
+			taskp->Signal();
 		}
 		
 	}	

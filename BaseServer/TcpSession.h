@@ -4,12 +4,12 @@
 #include <netinet/in.h>
 
 #include "StrPtrLen.h"
-#include "EventHandler.h"
+#include "task.h"
 
 #define REQUEST_BUFF_SIZE	(1024*16)
 #define RESPONSE_BUFF_SIZE	(1024*16)
 
-class TcpSession : public EventHandler
+class TcpSession : public Task
 {
 public:
 	TcpSession(int fd, struct sockaddr_in* addr);
