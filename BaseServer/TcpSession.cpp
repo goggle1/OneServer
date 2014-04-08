@@ -5,9 +5,9 @@
 #include <netinet/tcp.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
-#include "errno.h"
-
+#include "common.h"
 #include "EventThread.h"
 #include "TcpSession.h"
 
@@ -51,7 +51,7 @@ int TcpSession::Init()
 	return 0;
 }
 
-int TcpSession::Run()
+int TcpSession::DoRead()
 {
 	char r_buffer[1024];
 	size_t len = 1024;
@@ -65,7 +65,7 @@ int TcpSession::Run()
 		ssize_t r_ret = recv(m_fd, r_buffer, len, 0);
 		if(r_ret == 0)
 		{
-			fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
+			fprintf(stdout, "%s: recv %ld, from fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
 			return -1;
 		}
 		else if(r_ret < 0)
@@ -82,7 +82,8 @@ int TcpSession::Run()
 				return -1;
 			}
 		}
-		fprintf(stdout, "%s: recv %ld, %s\n", __PRETTY_FUNCTION__, r_ret, r_buffer);
+		r_buffer[r_ret] = '\0';
+		fprintf(stdout, "%s: recv %ld,\n%s\n", __PRETTY_FUNCTION__, r_ret, r_buffer);
 		
 		ssize_t s_ret = send(m_fd, s_buffer, s_len, 0);	
 		if(s_ret == -1)
@@ -95,7 +96,7 @@ int TcpSession::Run()
 			}
 			else
 			{
-				fprintf(stdout, "%s: send %ld, close fd=%d\n", __PRETTY_FUNCTION__, s_ret, m_fd);
+				fprintf(stdout, "%s: send %ld, from fd=%d\n", __PRETTY_FUNCTION__, s_ret, m_fd);
 				return -1;
 			}
 		}
@@ -105,3 +106,46 @@ int TcpSession::Run()
 	
 	return 0;
 }
+
+int TcpSession::Run()
+{	
+	int ret = 0;
+	
+	while(1)
+	{		
+		void* elementp = NULL;
+		{
+			OSMutexLocker theLocker(&fMutex);
+			elementp = dequeh_remove_head(&m_EventsQueue);
+			if(elementp == NULL)
+			{
+				break;
+			}
+		}
+
+		u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);
+		u_int32_t events = temp;
+		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+		if(events & EVENT_READ)
+		{
+			ret = DoRead();			
+		}
+		else if(events & EVENT_CONTINUE)
+		{
+			//ret = DoContinue();			
+		}
+		else if(events & EVENT_TIMEOUT)
+		{
+			//ret = DoTimeout();			
+		}
+		
+		if(ret < 0)
+		{
+			return ret;
+		}
+	}
+	
+	return ret;
+}
+
+

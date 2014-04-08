@@ -14,8 +14,9 @@ class TcpSession : public Task
 public:
 	TcpSession(int fd, struct sockaddr_in* addr);
 	virtual ~TcpSession();
-	int Init();
-	virtual int Run();	
+	int 			Init();
+	int				DoRead();
+	virtual int 	Run();	
 	
 protected:
 	int 				m_fd;

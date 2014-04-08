@@ -9,11 +9,11 @@ class TcpServer : public Task
 public:
 	TcpServer();
 	virtual ~TcpServer();
-	int 	Init(u_int32_t ip, u_int16_t port);
-	int		GetFd()	{ return m_fd; };
-	TcpSession*   GetSession(int fd, struct sockaddr_in* addr);
-	
-	virtual int Run();	
+	int 			Init(u_int32_t ip, u_int16_t port);
+	int				GetFd()	{ return m_fd; };
+	TcpSession*   	GetSession(int fd, struct sockaddr_in* addr);
+	int				DoRead();
+	virtual int 	Run();	
 
 protected:
 	int		m_fd;

@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "common.h"
 #include "events.h"
 #include "StringParser.h"
 #include "HttpSession.h"
@@ -63,6 +64,7 @@
 
 // octet-stream
 #define CONTENT_TYPE_APPLICATION_OCTET_STREAM	"application/octet-stream"
+
 
 bool file_exist(char* abs_path)
 {
@@ -401,7 +403,8 @@ int HttpSession::RecvData()
 				return -1;
 			}
 		}
-		fprintf(stdout, "%s: size=%ld, recv=%ld, %s\n", __PRETTY_FUNCTION__, recv_buff_size, recv_ret, recv_bufferp);
+		fprintf(stdout, "%s: size=%ld, recv=%ld,\n", __PRETTY_FUNCTION__, recv_buff_size, recv_ret, recv_bufferp);
+		my_printf(stdout, recv_bufferp, recv_ret);
 		m_StrReceived.Len += recv_ret;		
 	}
 
