@@ -107,7 +107,8 @@ int TaskThread::Entry()
 		else if(task_ret == 0)
 		{
 			//taskp->Detach();
-			this->EnqueTask(taskp);
+			//this->EnqueTask(taskp);
+			// do nothing.
 		}
 		else
 		{

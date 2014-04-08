@@ -12,15 +12,16 @@ class Task
 {
 public:
 	Task();
-	virtual ~Task();
-	int		Signal();
-	void 	Detach();
-	int 	EnqueEvents(u_int32_t events);
-	bool	IsValid();
-	int		SetValid(bool value);
-	virtual int Run() = 0;
+	virtual ~Task();	
+	int 			EnqueEvents(u_int32_t events);
+	int				DequeEvents(u_int32_t& events);
+	bool			IsValid();
+	int				SetValid(bool value);
+	virtual int 	Run() = 0;
 	
 protected:	
+	int				Attach();
+	void 			Detach();
 	TaskThread*	m_task_thread;
 	
 	DEQUEH_T 	m_EventsQueue;	

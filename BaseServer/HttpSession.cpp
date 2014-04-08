@@ -343,12 +343,7 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
 
 HttpSession::~HttpSession()
 {
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
-	if(m_fd != -1)
-	{
-		close(m_fd);
-		m_fd = -1;
-	}
+	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);	
 }
 
 bool HttpSession::IsFullRequest()
@@ -774,18 +769,13 @@ int HttpSession::Run()
 	
 	while(1)
 	{		
-		void* elementp = NULL;
+		u_int32_t events = 0;
+		ret = DequeEvents(events);
+		if(ret < 1)
 		{
-			OSMutexLocker theLocker(&fMutex);
-			elementp = dequeh_remove_head(&m_EventsQueue);
-			if(elementp == NULL)
-			{
-				break;
-			}
+			return 0;
 		}
-
-		u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);
-		u_int32_t events = temp;
+		
 		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
 		if(events & EVENT_READ)
 		{
@@ -800,7 +790,7 @@ int HttpSession::Run()
 			//ret = DoTimeout();			
 		}
 		
-		if(ret < 0)
+		if(ret != 0)
 		{
 			return ret;
 		}
