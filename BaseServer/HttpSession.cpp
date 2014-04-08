@@ -342,6 +342,11 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
 HttpSession::~HttpSession()
 {
 	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
+	if(m_fd != -1)
+	{
+		close(m_fd);
+		m_fd = -1;
+	}
 }
 
 bool HttpSession::IsFullRequest()
@@ -379,7 +384,7 @@ int HttpSession::RecvData()
 		ssize_t recv_ret = recv(m_fd, recv_bufferp, recv_buff_size, 0);
 		if(recv_ret == 0)
 		{
-			fprintf(stdout, "%s: recv=%ld, close fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
+			fprintf(stdout, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
 			return -1;
 		}
 		else if(recv_ret < 0)
@@ -392,7 +397,7 @@ int HttpSession::RecvData()
 			}
 			else
 			{
-				fprintf(stderr, "%s: recv=%ld, close fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
+				fprintf(stderr, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
 				return -1;
 			}
 		}
@@ -765,11 +770,15 @@ int HttpSession::Run()
 	int ret = 0;
 	
 	while(1)
-	{
-		void* elementp = dequeh_remove_head(&m_events_queue);
-		if(elementp == NULL)
+	{		
+		void* elementp = NULL;
 		{
-			break;
+			OSMutexLocker theLocker(&fMutex);
+			elementp = dequeh_remove_head(&m_EventsQueue);
+			if(elementp == NULL)
+			{
+				break;
+			}
 		}
 
 		u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);

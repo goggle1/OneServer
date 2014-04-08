@@ -3,15 +3,18 @@
 
 #include "events.h"
 #include "thread.h"
+#include "GrimReaper.h"
 
 class EventThread : public Thread
 {
 public:
 	EventThread();
     ~EventThread();    
+    int 	Init();
     virtual int Entry();
 
-	Events	m_events;
+	Events		m_EventsMaster;
+	GrimReaper	m_GrimReaper;
 };
 
 extern EventThread* 	g_event_thread;

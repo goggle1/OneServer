@@ -17,8 +17,9 @@ TaskThreadPool* g_task_thread_pool 	= NULL;
 int start_thread_event()
 {
 	int ret = 0;
-
+	
 	g_event_thread = new EventThread();
+	g_event_thread->Init();
 	g_event_thread->Start();
 	
 	return ret;
@@ -46,7 +47,7 @@ int start_server()
 	{
 		fprintf(stderr, "%s: server init error, return %d\n", __FUNCTION__, ret);
 	}
-	ret = g_event_thread->m_events.AddWatch(serverp->GetFd(), EVENT_READ, serverp);
+	ret = g_event_thread->m_EventsMaster.AddWatch(serverp->GetFd(), EVENT_READ, serverp);
 	if(ret < 0)
 	{
 		fprintf(stderr, "%s: events AddWatch, return %d\n", __FUNCTION__, ret);
@@ -60,7 +61,7 @@ int start_server()
 	{
 		fprintf(stderr, "%s: server init error, return %d\n", __FUNCTION__, ret);
 	}
-	ret = g_event_thread->m_events.AddWatch(server2p->GetFd(), EVENT_READ, server2p);
+	ret = g_event_thread->m_EventsMaster.AddWatch(server2p->GetFd(), EVENT_READ, server2p);
 	if(ret < 0)
 	{
 		fprintf(stderr, "%s: events AddWatch, return %d\n", __FUNCTION__, ret);

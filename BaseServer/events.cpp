@@ -1,5 +1,7 @@
-
+#include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/epoll.h>
 
 #include "events.h"
@@ -42,6 +44,10 @@ int Events::AddWatch(int fd, u_int32_t events, void* handler)
 	epoll_event.data.ptr = handler;
 	
 	ret = epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD, fd, &epoll_event);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s: epoll_ctl add %d return %d, errno=%d, %s\n", __PRETTY_FUNCTION__, fd, ret, errno, strerror(errno));
+	}
 	
 	return ret;
 }

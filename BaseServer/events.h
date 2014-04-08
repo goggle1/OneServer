@@ -9,10 +9,10 @@
 #define EVENT_TIMEOUT	0x00000200
 
 
-#define EPOLL_SIZE 	1000000
-#define MAX_EVENTS	10000
+#define EPOLL_SIZE 		1000000
+#define MAX_EVENTS		10000
 // ms
-#define WAIT_PERIOD	1000
+#define WAIT_PERIOD		1000
 
 
 class Events
@@ -27,7 +27,7 @@ public:
 	int DeleteWatch(int fd);
 	
 	int	m_epoll_fd;
-	//int m_fd_num;
+	//int m_fd_num;	// now, we don't care. maybe care about it later.
 	
 protected:
 

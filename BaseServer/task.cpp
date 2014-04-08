@@ -7,8 +7,9 @@
 Task::Task() : 
 	fTimerHeapElem(this)
 {
+	m_IsValid = true;
 	m_task_thread = NULL;
-	dequeh_init(&m_events_queue);
+	dequeh_init(&m_EventsQueue);
 	//fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
 }
 
@@ -25,11 +26,6 @@ int Task::Signal()
 	{
 		m_task_thread = g_task_thread_pool->SelectThread(THREAD_SHORT);
 		m_task_thread->EnqueTask(this);
-		m_task_thread->Signal();
-	}
-	else
-	{
-		m_task_thread->Signal();
 	}
 	
 	return 0;
@@ -43,21 +39,26 @@ void Task::Detach()
 int Task::EnqueEvents(u_int32_t events)
 {	
 	fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);	
-	
-	// events into deque.
-	dequeh_append(&m_events_queue, reinterpret_cast<void*>(events));
-	// signal (choose one task thread, into task)
+
+	{
+        OSMutexLocker theLocker(&fMutex);
+        dequeh_append(&m_EventsQueue, reinterpret_cast<void*>(events));
+    }			
 	Signal();
 	
 	return 0;
 }
 
 
-int Task::Run()
+bool Task::IsValid()
 {
-	// do nothing, just one example.
-	fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
-	
+	return m_IsValid;
+}
+
+int Task::SetValid(bool value)
+{
+	m_IsValid = value;
 	return 0;
 }
+
 

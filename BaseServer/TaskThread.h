@@ -1,6 +1,8 @@
 #ifndef __TASK_THREAD_H__
 #define __TASK_THREAD_H__
 
+#include "OSCond.h"
+#include "OSMutex.h"
 #include "dequeH.h"
 #include "task.h"
 #include "thread.h"
@@ -11,14 +13,14 @@ public:
 	TaskThread();
 	~TaskThread();
 	int		EnqueTask(Task* taskp);
-	int		Signal();
 	Task*	WaitForTask();
 	
 	virtual int Entry();
 
 protected:
 	DEQUEH_T	m_task_queue;
-	// lock
+	OSCond      fCond;
+    OSMutex     fMutex;
 
 	OSHeap              fHeap;	
 };

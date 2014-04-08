@@ -46,7 +46,7 @@ int TcpSession::Init()
    	int flag = ::fcntl(m_fd, F_GETFL, 0);
     err = ::fcntl(m_fd, F_SETFL, flag | O_NONBLOCK);
         
-	g_event_thread->m_events.AddWatch(m_fd, EVENT_READ, this);
+	g_event_thread->m_EventsMaster.AddWatch(m_fd, EVENT_READ, this);
 	
 	return 0;
 }
