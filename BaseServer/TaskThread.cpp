@@ -72,7 +72,7 @@ Task* TaskThread::WaitForTask()
             
         //wait...        
         OSMutexLocker theLocker(&fMutex);
-        if (m_task_queue.count == 0) 
+        //if (m_task_queue.count == 0) 
         {
         	fCond.Wait(&fMutex, theTimeout);
         }    
@@ -106,8 +106,8 @@ int TaskThread::Entry()
 		}
 		else if(task_ret == 0)
 		{
-			taskp->Detach();
-			//this->EnqueTask(taskp);
+			//taskp->Detach();
+			this->EnqueTask(taskp);
 		}
 		else
 		{
