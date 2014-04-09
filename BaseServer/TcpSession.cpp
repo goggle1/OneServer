@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "EventThread.h"
+#include "TimerThread.h"
 #include "TcpSession.h"
 
 TcpSession::TcpSession(int fd, struct sockaddr_in * addr)
@@ -104,11 +105,24 @@ int TcpSession::DoRead()
 			}
 		}
 		fprintf(stdout, "%s: send %ld, return %ld, %s\n", __PRETTY_FUNCTION__, s_len, s_ret, s_buffer);
+
+		g_timer_thread->SetTimeout(this, 5000);
 		
 	}
 	
 	return 0;
 }
+
+
+int TcpSession::DoTimeout()
+{
+	int ret = 0;
+
+	fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
+	
+	return -1;
+}
+
 
 int TcpSession::Run()
 {	
@@ -134,7 +148,7 @@ int TcpSession::Run()
 		}
 		else if(events & EVENT_TIMEOUT)
 		{
-			//ret = DoTimeout();			
+			ret = DoTimeout();			
 		}
 		
 		if(ret < 0)

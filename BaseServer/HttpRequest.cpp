@@ -38,6 +38,7 @@ u_int8_t HttpRequest::sURLStopConditions[] =
 
 HttpRequest::HttpRequest()
 {
+	fRequestPath = NULL;
 }
 
 HttpRequest::~HttpRequest()

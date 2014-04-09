@@ -31,7 +31,7 @@ protected:
 	//CONSTANTS:
 	enum
 	{
-		kResponseBufferSizeInBytes = 2048*10,		 //UInt32	
+		kResponseBufferSizeInBytes = 1024*256,		 //UInt32	
 		kReadBufferSize = 1024*16,
 	};
 	char		fResponseBuffer[kResponseBufferSizeInBytes];

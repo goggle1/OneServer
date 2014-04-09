@@ -31,8 +31,11 @@ protected:
     //and that way we wouldn't need both a heap elem and a queue elem here (just queue elem)
     OSHeapElem      fTimerHeapElem;
 
-    bool 		m_IsValid;
+    OSHeapElem 		fIdleElem;
 
+    bool 			m_IsValid;
+
+	friend class TimerThread;
     friend class TaskThread;
 };
 

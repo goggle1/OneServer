@@ -5,7 +5,8 @@
 #include "TaskThreadPool.h"
 
 Task::Task() : 
-	fTimerHeapElem(this)
+	fTimerHeapElem(this),
+	fIdleElem(this)
 {
 	m_IsValid = true;
 	m_task_thread = NULL;
@@ -38,7 +39,7 @@ void Task::Detach()
 
 int Task::EnqueEvents(u_int32_t events)
 {	
-	fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+	fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 	OSMutexLocker theLocker(&fMutex);
     dequeh_append(&m_EventsQueue, reinterpret_cast<void*>(events));    
 	this->Attach();
@@ -52,13 +53,14 @@ int Task::DequeEvents(u_int32_t& events)
 	void* elementp = dequeh_remove_head(&m_EventsQueue);
 	if(elementp == NULL)
 	{
+		fprintf(stdout, "%s[%p]: events=[null], thread=%p\n", __PRETTY_FUNCTION__, this, m_task_thread);
 		this->Detach();
 		return 0;
 	}
 	
 	u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);
 	events = temp;	
-	fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+	fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 	return 1;		
 }
 

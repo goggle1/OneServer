@@ -16,6 +16,7 @@ public:
 	virtual ~TcpSession();
 	int 			Init();
 	int				DoRead();
+	int 			DoTimeout();
 	virtual int 	Run();	
 	
 protected:

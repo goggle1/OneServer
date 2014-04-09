@@ -72,7 +72,7 @@ Task* TaskThread::WaitForTask()
             
         //wait...        
         OSMutexLocker theLocker(&fMutex);
-        //if (m_task_queue.count == 0) 
+        if (m_task_queue.count == 0) 
         {
         	fCond.Wait(&fMutex, theTimeout);
         }    
@@ -110,11 +110,15 @@ int TaskThread::Entry()
 			//this->EnqueTask(taskp);
 			// do nothing.
 		}
-		else
+		else if(task_ret > 0)
 		{
 			taskp->fTimerHeapElem.SetValue(OS::Milliseconds() + task_ret);
             fHeap.Insert(&taskp->fTimerHeapElem);			
 		}	
+		else
+		{
+			fprintf(stdout, "%s: taskp->Run() return %d\n", __PRETTY_FUNCTION__, task_ret);
+		}
 		
 	}
 	

@@ -3,16 +3,15 @@
 #include <sys/prctl.h>
 #include <pthread.h>
 
-// todo: will be deleted.
-#include "BaseServer/heap.h"
-
 #include "BaseServer/EventThread.h"
 #include "BaseServer/TaskThreadPool.h"
+#include "BaseServer/TimerThread.h"
 #include "BaseServer/TcpServer.h"
 #include "BaseServer/HttpServer.h"
 
 EventThread* 	g_event_thread 		= NULL;
 TaskThreadPool* g_task_thread_pool 	= NULL;
+TimerThread*	g_timer_thread		= NULL;
 
 int start_thread_event()
 {
@@ -31,6 +30,16 @@ int start_thread_workers()
 	
 	g_task_thread_pool = new TaskThreadPool();
 	g_task_thread_pool->Init();
+
+	return ret;
+}
+
+int start_thread_timer()
+{
+	int ret = 0;
+
+	g_timer_thread = new TimerThread();
+	g_timer_thread->Start();
 
 	return ret;
 }
@@ -84,8 +93,7 @@ int main(int argc, char* argv[])
 	int ret = 0;
 	ret = start_thread_event();
 	ret = start_thread_workers();
-	//ret = start_thread_timer();
-
+	ret = start_thread_timer();
 	ret = start_server();
 
 	while(1)

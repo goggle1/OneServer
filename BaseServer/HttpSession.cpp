@@ -420,8 +420,8 @@ int HttpSession::SendData()
 	ret = send(m_fd, fStrRemained.Ptr, should_send_len, 0);
     if(ret > 0)
     {        
-    	fprintf(stdout, "%s send %d done return %d\n", 
-            __PRETTY_FUNCTION__, should_send_len, ret);
+    	fprintf(stdout, "%s[%p]: send %d return %d\n", 
+            __PRETTY_FUNCTION__, this, should_send_len, ret);
         fStrRemained.Ptr += ret;
         fStrRemained.Len -= ret;
         ::memmove(fResponseBuffer, fStrRemained.Ptr, fStrRemained.Len);
@@ -439,8 +439,8 @@ int HttpSession::SendData()
     else
     {
     	int err = errno;
-        fprintf(stderr, "%s send %d done return %d, errno=%d, %s\n", 
-            __PRETTY_FUNCTION__, should_send_len, ret, err, strerror(err));
+        fprintf(stderr, "%s[%p]: send %d return %d, errno=%d, %s\n", 
+            __PRETTY_FUNCTION__, this, should_send_len, ret, err, strerror(err));
         if(err == EAGAIN)
         {
         	return 1;
@@ -697,14 +697,14 @@ int HttpSession::DoRead()
 		}
 
 		ret = SendData();
-		if(ret < 0)
+		if(ret != 0)
 		{
 			return ret;
 		}
 		
 		if(fFd != -1)
 		{
-			return 1;
+			return 1;			
 		}
 	}	
 
@@ -717,7 +717,7 @@ int HttpSession::DoContinue()
 {
 	int ret = 0;
 	ret = SendData();
-	if(ret < 0)
+	if(ret != 0)
 	{
 		return ret;
 	}
@@ -735,21 +735,34 @@ int HttpSession::DoContinue()
 		ssize_t read_len = read(fFd, buffer_availiable.Ptr, buffer_availiable.Len);
 		if(read_len < 0)
 		{
+			fprintf(stderr, "%s[%p]: read ret=%d, errno=%d, %s\n", 
+				__PRETTY_FUNCTION__, this, read_len, errno, strerror(errno));
 			close(fFd);
 			fFd = -1;
+			return -1;
+		}
+		else if(read_len == 0)
+		{
+			fprintf(stdout, "%s[%p]: read want=%d, ret=%d, [end of file or ?]\n", 
+				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
+			close(fFd);
+			fFd = -1;
+			//return -1;
+			// normal
+		}
+		else if(read_len < buffer_availiable.Len)
+		{
+			fprintf(stdout, "%s[%p]: read want=%d, ret=%d, [?]\n", 
+				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
+			fStrRemained.Len += read_len;
 		}
 		else
 		{
-			if(read_len < buffer_availiable.Len)
-			{
-				close(fFd);
-			}
-
 			fStrRemained.Len += read_len;
 		}
 		
 		ret = SendData();
-		if(ret < 0)
+		if(ret != 0)
 		{
 			return ret;
 		}
@@ -776,14 +789,15 @@ int HttpSession::Run()
 			return 0;
 		}
 		
-		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+		fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead();			
 		}
 		else if(events & EVENT_CONTINUE)
 		{
-			ret = DoContinue();			
+			ret = DoContinue();	
+			fprintf(stdout, "%s[%p]: DoContinue() ret=%d\n", __PRETTY_FUNCTION__, this, ret);		
 		}
 		else if(events & EVENT_TIMEOUT)
 		{

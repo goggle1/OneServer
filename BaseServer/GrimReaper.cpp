@@ -62,18 +62,13 @@ int GrimReaper::Run()
 	int ret = 0;		
 	while(1)
 	{		
-		void* elementp = NULL;
+		u_int32_t events = 0;
+		ret = DequeEvents(events);
+		if(ret < 1)
 		{
-			OSMutexLocker theLocker(&fMutex);
-			elementp = dequeh_remove_head(&m_EventsQueue);
-			if(elementp == NULL)
-			{
-				break;
-			}
+			return 0;
 		}
-
-		u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);
-		u_int32_t events = temp;
+		
 		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
 		if(events & EVENT_READ)
 		{
