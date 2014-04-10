@@ -6,12 +6,14 @@
 #include "BaseServer/EventThread.h"
 #include "BaseServer/TaskThreadPool.h"
 #include "BaseServer/TimerThread.h"
+#include "BaseServer/FilesMaster.h"
 #include "BaseServer/TcpServer.h"
 #include "BaseServer/HttpServer.h"
 
 EventThread* 	g_event_thread 		= NULL;
 TaskThreadPool* g_task_thread_pool 	= NULL;
 TimerThread*	g_timer_thread		= NULL;
+FilesMaster*	g_files_master		= NULL;
 
 int start_thread_event()
 {
@@ -41,6 +43,16 @@ int start_thread_timer()
 	g_timer_thread = new TimerThread();
 	g_timer_thread->Start();
 
+	return ret;
+}
+
+
+int start_files_master()
+{
+	int ret = 0;
+
+	g_files_master = new FilesMaster();	
+	
 	return ret;
 }
 
@@ -94,6 +106,7 @@ int main(int argc, char* argv[])
 	ret = start_thread_event();
 	ret = start_thread_workers();
 	ret = start_thread_timer();
+	ret = start_files_master();
 	ret = start_server();
 
 	while(1)

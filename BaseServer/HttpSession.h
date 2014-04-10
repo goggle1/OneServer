@@ -4,6 +4,9 @@
 #include "StringFormatter.h"
 #include "HttpRequest.h"
 #include "TcpSession.h"
+#include "FilesMaster.h"
+
+#define USE_FILE_BUFFER 1
 
 class HttpSession : public TcpSession
 {
@@ -43,7 +46,11 @@ protected:
 	StringFormatter 	fResponse;
 	u_int32_t			fContentLen;
 	// file
+#if USE_FILE_BUFFER
+	CFile*		m_CFile;
+#else
 	int			fFd;
+#endif
 	char		fBuffer[kReadBufferSize];
 	bool		fHaveRange;
 	int64_t		fRangeStart;

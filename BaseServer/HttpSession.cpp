@@ -66,6 +66,19 @@
 #define CONTENT_TYPE_APPLICATION_OCTET_STREAM	"application/octet-stream"
 
 
+#if USE_FILE_BUFFER
+bool file_exist(char* abs_path)
+{
+	int ret = 0;
+	ret = g_files_master->AccessFile(abs_path);
+	if(ret == 0)
+	{
+		return true;
+	}
+	
+	return false;
+}
+#else
 bool file_exist(char* abs_path)
 {
 	int ret = 0;
@@ -74,10 +87,10 @@ bool file_exist(char* abs_path)
 	{
 		return true;
 	}
-
 	
 	return false;
 }
+#endif
 
 char* file_suffix(char* abs_path)
 {
@@ -336,6 +349,11 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
     fResponse(NULL, 0)    
 {	
 	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
+#if USE_FILE_BUFFER
+	m_CFile 	= NULL;
+#else
+	m_fd		= -1;
+#endif
 	fHaveRange 	= false;
 	fRangeStart = 0;
 	fRangeStop 	= -1;
@@ -550,6 +568,88 @@ int HttpSession::ResponseError(HTTPStatusCode status_code)
 
 }
 
+#if USE_FILE_BUFFER
+int HttpSession::ResponseFile(char* abs_path)
+{
+	int ret = 0;
+
+	m_CFile = g_files_master->OpenFile(abs_path);	
+	if(m_CFile == NULL)
+	{
+		fHttpStatus = httpInternalServerError;
+		ret = ResponseError(fHttpStatus);
+		return ret;
+	}	
+	
+	
+	off_t file_len = m_CFile->GetFileLength();	
+	if(fRangeStop == -1)
+	{
+		fRangeStop = file_len - 1;
+	}	
+
+	fHttpStatus = httpOK;	
+	if(fHaveRange)
+	{
+		if(fRangeStart > fRangeStop)
+		{
+			fHttpStatus = httpRequestRangeNotSatisfiable;
+			ret = ResponseError(fHttpStatus);
+			delete m_CFile;
+			m_CFile = NULL;
+			return ret;
+		}
+		if(fRangeStop > file_len - 1)
+		{
+			fHttpStatus = httpRequestRangeNotSatisfiable;
+			ret = ResponseError(fHttpStatus);
+			delete m_CFile;
+			m_CFile = NULL;
+			return ret;
+		}
+		
+		fprintf(stdout, "%s: range=%ld-%ld", __PRETTY_FUNCTION__, fRangeStart, fRangeStop);
+		fHttpStatus = httpPartialContent;
+	}
+	
+	char* suffix = file_suffix(abs_path);
+	char* content_type = content_type_by_suffix(suffix);
+	fContentLen = fRangeStop+1-fRangeStart;
+	
+	fResponse.Set(fStrRemained.Ptr+fStrRemained.Len, kResponseBufferSizeInBytes-fStrRemained.Len);		
+	fResponse.PutFmtStr("%s %s %s\r\n", 
+			HttpProtocol::GetVersionString(http11Version)->Ptr,
+			HttpProtocol::GetStatusCodeAsString(fHttpStatus)->Ptr,			
+			HttpProtocol::GetStatusCodeString(fHttpStatus)->Ptr);
+    fResponse.PutFmtStr("Server: %s/%s\r\n", BASE_SERVER_NAME, BASE_SERVER_VERSION);
+    fResponse.PutFmtStr("Accept-Ranges: bytes\r\n");	
+    fResponse.PutFmtStr("Content-Length: %ld\r\n", fContentLen);    
+    if(fHaveRange)
+    {
+    	//Content-Range: 1000-3000/5000
+    	fResponse.PutFmtStr("Content-Range: bytes %ld-%ld/%ld\r\n", fRangeStart, fRangeStop, file_len);    
+    }
+    //fResponse.PutFmtStr("Content-Type: %s; charset=utf-8\r\n", content_type);
+    fResponse.PutFmtStr("Content-Type: %s", content_type);  
+    if(strcmp(content_type, CONTENT_TYPE_TEXT_HTML) == 0)
+    {
+    	fResponse.PutFmtStr(";charset=%s\r\n", CHARSET_UTF8);
+    }
+    else
+    {
+    	fResponse.Put("\r\n");
+    }    
+    fResponse.Put("\r\n"); 
+        
+    fStrResponse.Set(fResponse.GetBufPtr(), fResponse.GetBytesWritten());
+    //append to fStrRemained
+    fStrRemained.Len += fStrResponse.Len;  
+    //clear previous response.
+    fStrResponse.Set(fResponseBuffer, 0);
+   
+	return 0;
+}
+#else
 int HttpSession::ResponseFile(char* abs_path)
 {
 	int ret = 0;
@@ -631,7 +731,7 @@ int HttpSession::ResponseFile(char* abs_path)
    
 	return 0;
 }
-
+#endif
 
 int HttpSession::DoGet()
 {
@@ -701,18 +801,88 @@ int HttpSession::DoRead()
 		{
 			return ret;
 		}
-		
+
+		#if USE_FILE_BUFFER
+		if(m_CFile != NULL)
+		{
+			return 1;
+		}
+		#else
 		if(fFd != -1)
 		{
 			return 1;			
 		}
+		#endif
 	}	
 
 	return 0;
 	
 }
 
+#if USE_FILE_BUFFER
+int HttpSession::DoContinue()
+{
+	int ret = 0;
+	ret = SendData();
+	if(ret != 0)
+	{
+		return ret;
+	}
 
+	if(m_CFile != NULL)
+	{
+		StrPtrLen buffer_availiable;
+		buffer_availiable.Ptr = fStrRemained.Ptr + fStrRemained.Len;
+		buffer_availiable.Len = kResponseBufferSizeInBytes - fStrRemained.Len;
+		if(buffer_availiable.Len <= 0)
+		{
+			return 1;
+		}
+		
+		ssize_t read_len = m_CFile->Read(buffer_availiable.Ptr, buffer_availiable.Len);
+		if(read_len < 0)
+		{
+			fprintf(stderr, "%s[%p]: read ret=%ld, errno=%d, %s\n", 
+				__PRETTY_FUNCTION__, this, read_len, errno, strerror(errno));
+			delete m_CFile;
+			m_CFile = NULL;
+			return -1;
+		}
+		else if(read_len == 0)
+		{
+			fprintf(stdout, "%s[%p]: read want=%d, ret=%ld, [end of file]\n", 
+				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
+			delete m_CFile;
+			m_CFile = NULL;
+			// normal
+			//return -1;			
+		}
+		else if(read_len < buffer_availiable.Len)
+		{
+			fprintf(stdout, "%s[%p]: read want=%d, ret=%ld, [read -> end_of_file]\n", 
+				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
+			fStrRemained.Len += read_len;
+		}
+		else
+		{
+			fStrRemained.Len += read_len;
+		}
+		
+		ret = SendData();
+		if(ret != 0)
+		{
+			return ret;
+		}
+	}
+
+	if(m_CFile != NULL)
+	{
+		return 1;
+	}
+		
+	return 0;
+}
+#else
 int HttpSession::DoContinue()
 {
 	int ret = 0;
@@ -747,8 +917,8 @@ int HttpSession::DoContinue()
 				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
 			close(fFd);
 			fFd = -1;
-			//return -1;
 			// normal
+			//return -1;			
 		}
 		else if(read_len < buffer_availiable.Len)
 		{
@@ -775,6 +945,7 @@ int HttpSession::DoContinue()
 		
 	return 0;
 }
+#endif
 
 int HttpSession::Run()
 {	
