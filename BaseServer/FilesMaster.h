@@ -15,7 +15,7 @@ protected:
 	int			AddFileBuffer(FileBuffer* FileBufferp);
 	FileBuffer*	FindFile(char* file_name);
 	DEQUEH_T	m_FilesDeque;
-	// todo: hash.
+	// todo: hash replace deque.
 };
 
 extern FilesMaster*	g_files_master;
