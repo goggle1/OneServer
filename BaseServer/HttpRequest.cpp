@@ -43,6 +43,11 @@ HttpRequest::HttpRequest()
 
 HttpRequest::~HttpRequest()
 {
+	if(fRequestPath != NULL)
+    {
+    	delete [] fRequestPath;
+    	fRequestPath = NULL;
+    }
 }
 
 void HttpRequest::SetKeepAlive(StrPtrLen *keepAliveValue)

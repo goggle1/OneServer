@@ -16,6 +16,7 @@ Task::Task() :
 
 Task::~Task()
 {
+	dequeh_release(&m_EventsQueue, NULL);
 	//fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
 }
 

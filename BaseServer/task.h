@@ -39,4 +39,10 @@ protected:
     friend class TaskThread;
 };
 
+inline void task_release(void* elementp)
+{
+	Task* taskp = (Task*)elementp;
+	delete taskp;
+}
+
 #endif

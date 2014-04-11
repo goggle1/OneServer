@@ -4,6 +4,7 @@
 #include "EventThread.h"
 #include "GrimReaper.h"
 
+
 GrimReaper::GrimReaper()
 {
 	dequeh_init(&m_DeathDeque);	
@@ -11,7 +12,7 @@ GrimReaper::GrimReaper()
 
 GrimReaper::~GrimReaper()
 {
-	
+	dequeh_release(&m_DeathDeque, task_release);	
 }
 
 int GrimReaper::Init()

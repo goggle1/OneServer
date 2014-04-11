@@ -8,7 +8,7 @@
 
 #define REQUEST_BUFF_SIZE	(1024*16)
 #define RESPONSE_BUFF_SIZE	(1024*16)
-
+#define MAX_IPADDR_LEN		32
 class TcpSession : public Task
 {
 public:
@@ -20,8 +20,9 @@ public:
 	virtual int 	Run();	
 	
 protected:
-	int 				m_fd;
-	struct sockaddr_in 	m_addr;
+	int 				m_SockFd;
+	struct sockaddr_in 	m_SockAddr;
+	char				m_IpAddr[MAX_IPADDR_LEN];
 	
 	char				m_RequestBuffer[REQUEST_BUFF_SIZE];
 	StrPtrLen			m_StrReceived;

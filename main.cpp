@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/prctl.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "BaseServer/EventThread.h"
 #include "BaseServer/TaskThreadPool.h"
@@ -59,6 +60,8 @@ int start_files_master()
 int start_server()
 {
 	int ret = 0;
+
+	signal(SIGPIPE, SIG_IGN);
 	
 	u_int32_t ip = 0;
 	u_int16_t port = 9191;

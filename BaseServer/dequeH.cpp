@@ -58,8 +58,12 @@ void 		dequeh_release(DEQUEH_T* dequep, RELEASE_FUNCTION release_it)
 	while(nodep != NULL)
 	{
 		DEQUEH_NODE* tempp = nodep->nextp;
-	
-		release_it(nodep->elementp);		
+
+		if(release_it != NULL)
+		{
+			release_it(nodep->elementp);
+		}
+		
 		free(nodep);
 
 		if(tempp == dequep->headp)
@@ -88,26 +92,28 @@ void* 	dequeh_remove_head(DEQUEH_T* dequep)
 	
 	if(dequep->count == 1)
 	{
-		DEQUEH_NODE* tempp = dequep->headp;
+		DEQUEH_NODE* nodep = dequep->headp;
 		dequep->count = 0;
 		dequep->headp = NULL;
 		
-		void* elementp = tempp->elementp;
-		free(tempp);
+		void* elementp = nodep->elementp;
+		
+		free(nodep);
 		
 		return elementp;
 	}
 	
 	DEQUEH_NODE* headp = dequep->headp;
 	DEQUEH_NODE* tailp = headp->prevp;
-	DEQUEH_NODE* tempp = headp->nextp;
-	tempp->prevp = headp->prevp;
-	tailp->nextp = tempp;
+	DEQUEH_NODE* nextp = headp->nextp;
+	nextp->prevp = headp->prevp;
+	tailp->nextp = nextp;
 	
 	dequep->count --;
-	dequep->headp = tempp;
+	dequep->headp = nextp;
 
 	void* elementp = headp->elementp;
+	
 	free(headp);
 
 	return elementp;		

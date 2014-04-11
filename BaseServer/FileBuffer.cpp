@@ -20,7 +20,12 @@ FileBuffer::FileBuffer()
 
 FileBuffer::~FileBuffer()
 {
-	// todo:
+	if(m_fd != -1)
+	{
+		close(m_fd);
+		m_fd = -1;
+	}
+	dequeh_release(&m_PiecesDeque, piece_release);
 }
 
 int FileBuffer::Open(char* file_name)

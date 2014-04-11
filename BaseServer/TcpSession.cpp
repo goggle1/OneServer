@@ -14,20 +14,21 @@
 
 TcpSession::TcpSession(int fd, struct sockaddr_in * addr)
 {
-	m_fd = fd;	
-	memcpy(&m_addr, addr, sizeof(struct sockaddr_in));
+	m_SockFd = fd;	
+	memcpy(&m_SockAddr, addr, sizeof(struct sockaddr_in));
+	
 	m_StrReceived.Ptr = m_RequestBuffer;
 	m_StrReceived.Len = 0;
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
+	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 }
 
 TcpSession::~TcpSession()
 {	
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
-	if(m_fd != -1)
+	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
+	if(m_SockFd != -1)
 	{
-		close(m_fd);
-		m_fd = -1;
+		close(m_SockFd);
+		m_SockFd = -1;
 	}
 }
 
@@ -36,21 +37,21 @@ int TcpSession::Init()
 	//set options on the socket
     //we are a server, always disable nagle algorithm
     int one = 1;
-    int err = ::setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(int));
+    int err = ::setsockopt(m_SockFd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(int));
     //AssertV(err == 0, OSThread::GetErrno());
     
-    err = ::setsockopt(m_fd, SOL_SOCKET, SO_KEEPALIVE, (char*)&one, sizeof(int));
+    err = ::setsockopt(m_SockFd, SOL_SOCKET, SO_KEEPALIVE, (char*)&one, sizeof(int));
     //AssertV(err == 0, OSThread::GetErrno());
 
     int sndBufSize = 96L * 1024L;
-    err = ::setsockopt(m_fd, SOL_SOCKET, SO_SNDBUF, (char*)&sndBufSize, sizeof(int));
+    err = ::setsockopt(m_SockFd, SOL_SOCKET, SO_SNDBUF, (char*)&sndBufSize, sizeof(int));
     //AssertV(err == 0, OSThread::GetErrno());
 
 	// InitNonBlocking
-   	int flag = ::fcntl(m_fd, F_GETFL, 0);
-    err = ::fcntl(m_fd, F_SETFL, flag | O_NONBLOCK);
+   	int flag = ::fcntl(m_SockFd, F_GETFL, 0);
+    err = ::fcntl(m_SockFd, F_SETFL, flag | O_NONBLOCK);
         
-	g_event_thread->m_EventsMaster.AddWatch(m_fd, EVENT_READ, this);
+	g_event_thread->m_EventsMaster.AddWatch(m_SockFd, EVENT_READ, this);
 	
 	return 0;
 }
@@ -66,10 +67,10 @@ int TcpSession::DoRead()
 	
 	while(1)
 	{
-		ssize_t r_ret = recv(m_fd, r_buffer, len, 0);
+		ssize_t r_ret = recv(m_SockFd, r_buffer, len, 0);
 		if(r_ret == 0)
 		{
-			fprintf(stdout, "%s: recv %ld, from fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
+			fprintf(stdout, "%s: recv %ld, from fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_SockFd);
 			return -1;
 		}
 		else if(r_ret < 0)
@@ -82,14 +83,14 @@ int TcpSession::DoRead()
 			}
 			else
 			{
-				fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_fd);
+				fprintf(stdout, "%s: recv %ld, close fd=%d\n", __PRETTY_FUNCTION__, r_ret, m_SockFd);
 				return -1;
 			}
 		}
 		r_buffer[r_ret] = '\0';
 		fprintf(stdout, "%s: recv %ld,\n%s\n", __PRETTY_FUNCTION__, r_ret, r_buffer);
 		
-		ssize_t s_ret = send(m_fd, s_buffer, s_len, 0);	
+		ssize_t s_ret = send(m_SockFd, s_buffer, s_len, 0);	
 		if(s_ret == -1)
 		{
 			int err = errno;
@@ -100,7 +101,7 @@ int TcpSession::DoRead()
 			}
 			else
 			{
-				fprintf(stdout, "%s: send %ld, from fd=%d\n", __PRETTY_FUNCTION__, s_ret, m_fd);
+				fprintf(stdout, "%s: send %ld, from fd=%d\n", __PRETTY_FUNCTION__, s_ret, m_SockFd);
 				return -1;
 			}
 		}

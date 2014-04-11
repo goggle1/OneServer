@@ -348,11 +348,11 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
     fStrRemained(fStrResponse),
     fResponse(NULL, 0)    
 {	
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);
+	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 #if USE_FILE_BUFFER
 	m_CFile 	= NULL;
 #else
-	m_fd		= -1;
+	fFd		= -1;
 #endif
 	fHaveRange 	= false;
 	fRangeStart = 0;
@@ -361,7 +361,20 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
 
 HttpSession::~HttpSession()
 {
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_fd, m_addr.sin_addr.s_addr, m_addr.sin_port);	
+	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);	
+#if USE_FILE_BUFFER
+	if(m_CFile != NULL)
+	{
+		delete m_CFile;
+		m_CFile = NULL;
+	}
+#else
+	if(fFd != -1)
+	{
+		close(fFd);
+		fFd = -1;
+	}
+#endif
 }
 
 bool HttpSession::IsFullRequest()
@@ -396,10 +409,10 @@ int HttpSession::RecvData()
 			return -1;
 		}
 		
-		ssize_t recv_ret = recv(m_fd, recv_bufferp, recv_buff_size, 0);
+		ssize_t recv_ret = recv(m_SockFd, recv_bufferp, recv_buff_size, 0);
 		if(recv_ret == 0)
 		{
-			fprintf(stdout, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
+			fprintf(stdout, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_SockFd);
 			return -1;
 		}
 		else if(recv_ret < 0)
@@ -412,7 +425,7 @@ int HttpSession::RecvData()
 			}
 			else
 			{
-				fprintf(stderr, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_fd);
+				fprintf(stderr, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_SockFd);
 				return -1;
 			}
 		}
@@ -435,7 +448,7 @@ int HttpSession::SendData()
     }  	
 
 	int should_send_len = fStrRemained.Len;
-	ret = send(m_fd, fStrRemained.Ptr, should_send_len, 0);
+	ret = send(m_SockFd, fStrRemained.Ptr, should_send_len, 0);
     if(ret > 0)
     {        
     	fprintf(stdout, "%s[%p]: send %d return %d\n", 
@@ -465,8 +478,8 @@ int HttpSession::SendData()
         }
         else // EPIPE, ECONNRESET
         {
-        	close(m_fd);
-        	m_fd = -1;
+        	close(m_SockFd);
+        	m_SockFd = -1;
         	return -1;
         }
     }

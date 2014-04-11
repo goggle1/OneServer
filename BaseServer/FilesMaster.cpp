@@ -7,10 +7,12 @@
 
 FilesMaster::FilesMaster()
 {
+	dequeh_init(&m_FilesDeque);
 }
 
 FilesMaster::~FilesMaster()
 {
+	dequeh_release(&m_FilesDeque, FileBuffer_release);
 }
 
 int FilesMaster::AccessFile(char* file_name)

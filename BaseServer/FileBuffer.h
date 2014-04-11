@@ -2,6 +2,8 @@
 #define __FILEBUFFER_H__
 
 #include <sys/types.h>
+#include <stdlib.h>
+
 #include "dequeH.h"
 
 #define PIECE_SIZE			(1024*256)
@@ -14,6 +16,18 @@ typedef struct piece_t
 	int		access_count;
 	void* 	data;	
 } PIECE_T;
+
+inline void piece_release(void* elementp)
+{
+	PIECE_T* piecep = (PIECE_T*)elementp;
+	if(piecep->data != NULL)
+	{
+		free(piecep->data);
+		piecep->data = NULL;
+	}
+
+	free(piecep);	
+}
 
 class FileBuffer
 {
@@ -33,6 +47,13 @@ protected:
 	int64_t		m_FileLength;
 	DEQUEH_T	m_PiecesDeque;
 };
+
+
+inline void FileBuffer_release(void* elementp)
+{
+	FileBuffer* FileBufferp = (FileBuffer*)elementp;
+	delete FileBufferp;
+}
 
 // CFile: ClassFile, which is similiar to FILE(man fopen).
 class  CFile
