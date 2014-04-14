@@ -7,7 +7,7 @@
 Task::Task() : 
 	fTimerHeapElem(this),
 	fIdleElem(this)
-{
+{	
 	m_IsValid = true;
 	m_task_thread = NULL;
 	dequeh_init(&m_EventsQueue);
@@ -46,14 +46,15 @@ int Task::EnqueEvents(u_int32_t events)
 	{
 	    dequeh_append(&m_EventsQueue, (void*)events);    
 		this->Attach();
+		return 0;
 	}
 	
-	return 0;
+	return -1;
 }
 
 int Task::DequeEvents(u_int32_t& events)
 {
-	OSMutexLocker theLocker(&fMutex);
+	OSMutexLocker theLocker(&fMutex);	
 	void* elementp = dequeh_remove_head(&m_EventsQueue);
 	if(elementp == NULL)
 	{
@@ -81,8 +82,10 @@ int Task::SetInvalid()
 	{
 		m_IsValid = false;
 		Release();
+		return 0;
 	}
-	return 0;
+	
+	return -1;
 }
 
 

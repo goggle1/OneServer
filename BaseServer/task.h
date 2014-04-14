@@ -13,6 +13,7 @@ class Task
 public:
 	Task();
 	virtual ~Task();	
+	int				GetFd() { return m_SockFd; };
 	int 			EnqueEvents(u_int32_t events);
 	int				DequeEvents(u_int32_t& events);
 	int				SetInvalid();
@@ -23,7 +24,8 @@ public:
 protected:	
 	int				Attach();
 	void 			Detach();
-	TaskThread*	m_task_thread;
+	int 			m_SockFd;
+	TaskThread*		m_task_thread;
 	
 	DEQUEH_T 	m_EventsQueue;	
     OSMutex     fMutex;

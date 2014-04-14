@@ -53,10 +53,10 @@ int TcpSession::Init()
    	int flag = ::fcntl(m_SockFd, F_GETFL, 0);
     err = ::fcntl(m_SockFd, F_SETFL, flag | O_NONBLOCK);
         
-	int ret = g_event_thread->m_EventsMaster.AddWatch(m_SockFd, EVENT_READ, this);
+	int ret = g_event_thread->m_BirthAngel.EnqueBirth(this);
 	if(ret < 0)
 	{
-		fprintf(stderr, "%s[%p]: events AddWatch %d, return %d\n", __FUNCTION__, this, m_SockFd, ret);
+		fprintf(stderr, "%s[%p]: m_BirthAngel EnqueBirth [%d], return %d\n", __FUNCTION__, this, m_SockFd, ret);
 		return -1;
 	}
 	
@@ -67,11 +67,13 @@ void TcpSession::Release()
 {
 	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
 	int ret = 0;
+	/*
 	ret = g_event_thread->m_EventsMaster.DeleteWatch(m_SockFd);
 	if(ret < 0)
 	{
 		fprintf(stderr, "%s[%p]: events DeleteWatch %d, return %d\n", __FUNCTION__, this, m_SockFd, ret);
 	}
+	*/
 
 	ret = g_event_thread->m_GrimReaper.EnqueDeath(this);
 	if(ret < 0)

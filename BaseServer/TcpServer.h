@@ -15,7 +15,7 @@ public:
 	virtual int 	Run();
 
 protected:
-	int		m_fd;
+	//int		m_SockFd;
 };
 
 #endif

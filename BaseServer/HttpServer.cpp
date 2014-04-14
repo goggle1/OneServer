@@ -27,7 +27,7 @@ int HttpServer::DoRead()
 	{
 		struct sockaddr_in addr;
 		socklen_t size = sizeof(addr);
-		int a_fd = accept(m_fd, (struct sockaddr*)&addr, &size);
+		int a_fd = accept(m_SockFd, (struct sockaddr*)&addr, &size);
 		if (a_fd == -1)
 		{
 			int acceptError = errno;

@@ -3,6 +3,7 @@
 
 #include "events.h"
 #include "thread.h"
+#include "BirthAngel.h"
 #include "GrimReaper.h"
 
 class EventThread : public Thread
@@ -14,7 +15,8 @@ public:
     virtual int Entry();
 
 	Events		m_EventsMaster;
-	GrimReaper	m_GrimReaper;
+	BirthAngel	m_BirthAngel;
+	GrimReaper	m_GrimReaper;	
 };
 
 extern EventThread* 	g_event_thread;

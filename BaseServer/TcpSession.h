@@ -21,7 +21,7 @@ public:
 	virtual	void	Release();
 	
 protected:
-	int 				m_SockFd;
+	//int 				m_SockFd;
 	struct sockaddr_in 	m_SockAddr;
 	char				m_IpAddr[MAX_IPADDR_LEN];
 	
