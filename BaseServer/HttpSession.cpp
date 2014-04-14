@@ -348,7 +348,8 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
     fStrRemained(fStrResponse),
     fResponse(NULL, 0)    
 {	
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
+	fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
+		m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 #if USE_FILE_BUFFER
 	m_CFile 	= NULL;
 #else
@@ -361,7 +362,8 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
 
 HttpSession::~HttpSession()
 {
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);	
+	fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
+		m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);	
 #if USE_FILE_BUFFER
 	if(m_CFile != NULL)
 	{
@@ -405,31 +407,31 @@ int HttpSession::RecvData()
 		ssize_t recv_buff_size	= REQUEST_BUFF_SIZE - m_StrReceived.Len;
 		if(recv_buff_size <= 0)
 		{
-			fprintf(stderr, "%s: recv buffer full, recv_buff_size=%ld\n", __PRETTY_FUNCTION__, recv_buff_size);
+			fprintf(stderr, "%s[%p]: recv buffer full, recv_buff_size=%ld\n", __PRETTY_FUNCTION__, this, recv_buff_size);
 			return -1;
 		}
 		
 		ssize_t recv_ret = recv(m_SockFd, recv_bufferp, recv_buff_size, 0);
 		if(recv_ret == 0)
 		{
-			fprintf(stdout, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_SockFd);
+			fprintf(stdout, "%s[%p]: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, this, recv_ret, m_SockFd);
 			return -1;
 		}
 		else if(recv_ret < 0)
 		{
 			int err = errno;
-			fprintf(stderr, "%s: errno=%d, %s\n", __PRETTY_FUNCTION__, err, strerror(err));
+			fprintf(stderr, "%s[%p]: errno=%d, %s\n", __PRETTY_FUNCTION__, this, err, strerror(err));
 			if(err == EAGAIN) // or other errno
 			{
 				return 0;
 			}
 			else
 			{
-				fprintf(stderr, "%s: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, recv_ret, m_SockFd);
+				fprintf(stderr, "%s[%p]: recv=%ld, from fd=%d\n", __PRETTY_FUNCTION__, this, recv_ret, m_SockFd);
 				return -1;
 			}
 		}
-		fprintf(stdout, "%s: size=%ld, recv=%ld,\n", __PRETTY_FUNCTION__, recv_buff_size, recv_ret, recv_bufferp);
+		fprintf(stdout, "%s[%p]: size=%ld, recv=%ld,\n", __PRETTY_FUNCTION__, this, recv_buff_size, recv_ret, recv_bufferp);
 		my_printf(stdout, recv_bufferp, recv_ret);
 		m_StrReceived.Len += recv_ret;		
 	}
@@ -749,7 +751,7 @@ int HttpSession::ResponseFile(char* abs_path)
 int HttpSession::DoGet()
 {
 	int ret = 0;
-	fprintf(stdout, "%s: %s\n", __PRETTY_FUNCTION__, m_Request.fRequestPath);
+	fprintf(stdout, "%s[%p]: %s\n", __PRETTY_FUNCTION__, this, m_Request.fRequestPath);
 	
 	char abs_path[PATH_MAX];
 	snprintf(abs_path, PATH_MAX, "%s%s", WORK_PATH, m_Request.fRequestPath);

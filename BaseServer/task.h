@@ -15,9 +15,10 @@ public:
 	virtual ~Task();	
 	int 			EnqueEvents(u_int32_t events);
 	int				DequeEvents(u_int32_t& events);
-	bool			IsValid();
-	int				SetValid(bool value);
+	int				SetInvalid();
 	virtual int 	Run() = 0;
+	// sub class do Release(), remove event source, remove timer.
+	virtual	void	Release();
 	
 protected:	
 	int				Attach();

@@ -42,8 +42,11 @@ int Task::EnqueEvents(u_int32_t events)
 {	
 	fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 	OSMutexLocker theLocker(&fMutex);
-    dequeh_append(&m_EventsQueue, reinterpret_cast<void*>(events));    
-	this->Attach();
+	if(m_IsValid)
+	{
+	    dequeh_append(&m_EventsQueue, (void*)events);    
+		this->Attach();
+	}
 	
 	return 0;
 }
@@ -59,20 +62,26 @@ int Task::DequeEvents(u_int32_t& events)
 		return 0;
 	}
 	
-	u_int64_t temp = reinterpret_cast<u_int64_t>(elementp);
-	events = temp;	
+	events = (u_int32_t)(u_int64_t)elementp;
 	fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 	return 1;		
 }
 
-bool Task::IsValid()
+void Task::Release()
 {
-	return m_IsValid;
+	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
+	// do nothing.
 }
 
-int Task::SetValid(bool value)
+int Task::SetInvalid()
 {
-	m_IsValid = value;
+	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
+	OSMutexLocker theLocker(&fMutex);
+	if(m_IsValid)
+	{
+		m_IsValid = false;
+		Release();
+	}
 	return 0;
 }
 

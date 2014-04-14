@@ -26,21 +26,21 @@ int EventThread::Entry()
 	struct epoll_event events[MAX_EVENTS];
 	while(1)
 	{	
-		int invalid_num = 0;
+		bool GrimReaper_is_called = false;
 		int num = epoll_wait(m_EventsMaster.m_epoll_fd, events, MAX_EVENTS, WAIT_PERIOD);
 		for(int index = 0; index < num; ++index) 
 		{
 			Task* taskp = (Task*)events[index].data.ptr;
-			if(taskp!=&m_GrimReaper && taskp->IsValid())
+			if(taskp == &m_GrimReaper)
 			{
-				taskp->EnqueEvents(events[index].events);
+				GrimReaper_is_called = true;
 			}
 			else
 			{
-				invalid_num ++;
+				taskp->EnqueEvents(events[index].events);
 			}
 		}
-		if(invalid_num > 0)
+		if(GrimReaper_is_called)
 		{
 			m_GrimReaper.EnqueEvents(EVENT_READ);
 		}		

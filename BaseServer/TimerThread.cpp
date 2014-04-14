@@ -66,10 +66,7 @@ int TimerThread::Entry()
         while ((fIdleHeap.CurrentHeapSize() > 0) && (fIdleHeap.PeekMin()->GetValue() <= msec))
         {
             Task* taskp = (Task*)fIdleHeap.ExtractMin()->GetEnclosingObject(); 
-            if(taskp->IsValid())
-            {
-            	taskp->EnqueEvents(EVENT_TIMEOUT);
-            }
+           	taskp->EnqueEvents(EVENT_TIMEOUT);
         }
                         
         //we are done sending idle events. If there is a lowest tick count, then

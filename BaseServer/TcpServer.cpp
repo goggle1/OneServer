@@ -9,22 +9,25 @@
 #include <stdlib.h>
 
 #include "events.h"
+#include "EventThread.h"
 #include "TcpServer.h"
 
 TcpServer::TcpServer()
 {
 	m_fd = -1;
+	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
 }
 
 TcpServer::~TcpServer()
 {
+	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
 }
 
 int TcpServer::DoRead()
 {
 	int ret = 0;
 
-	fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
+	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
 
 	while(1)
 	{
@@ -34,7 +37,7 @@ int TcpServer::DoRead()
 		if (a_fd == -1)
 		{
 	        int acceptError = errno;
-	        fprintf(stderr, "%s: errno=%d, %s\n", __PRETTY_FUNCTION__, acceptError, strerror(acceptError));
+	        fprintf(stderr, "%s[%p]: errno=%d, %s\n", __PRETTY_FUNCTION__, this, acceptError, strerror(acceptError));
 	        if (acceptError == EAGAIN)
 	        {   
 	            return 0;
@@ -74,7 +77,7 @@ int TcpServer::Run()
 			return 0;
 		}
 		
-		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+		fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead(); 		
@@ -136,6 +139,12 @@ int TcpServer::Init(u_int32_t ip, u_int16_t port)
 		return -5;
 	}
 
+	ret = g_event_thread->m_EventsMaster.AddWatch(m_fd, EVENT_READ, this);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s[%p]: events AddWatch %d, return %d\n", __FUNCTION__, this, m_fd, ret);
+		return -6;
+	}
 	
 	return ret;
 }

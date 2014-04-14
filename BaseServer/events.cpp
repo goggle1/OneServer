@@ -52,5 +52,18 @@ int Events::AddWatch(int fd, u_int32_t events, void* handler)
 	return ret;
 }
 
+int Events::DeleteWatch(int fd)
+{
+	int ret = 0;
+	
+	ret = epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s: epoll_ctl add %d return %d, errno=%d, %s\n", __PRETTY_FUNCTION__, fd, ret, errno, strerror(errno));
+	}
+	
+	return ret;
+}
+
 
 

@@ -100,23 +100,11 @@ int TaskThread::Entry()
         		
 		int task_ret = taskp->Run();			
 		if(task_ret == -1)
-		{			
-			if(!taskp->IsValid())
-			{
-				fprintf(stderr, "%s[%p]: task is not valid !!!!!!!!!!!!!!!!\n",
-					__PRETTY_FUNCTION__, taskp);
-				// do nothing.
-			}
-			else
-			{
-				taskp->SetValid(false);
-				g_event_thread->m_GrimReaper.EnqueDeath(taskp);
-			}
+		{	
+			taskp->SetInvalid();			
 		}
 		else if(task_ret == 0)
 		{
-			//taskp->Detach();
-			//this->EnqueTask(taskp);
 			// do nothing.
 		}
 		else if(task_ret > 0)

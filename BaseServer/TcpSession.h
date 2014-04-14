@@ -17,7 +17,8 @@ public:
 	int 			Init();
 	int				DoRead();
 	int 			DoTimeout();
-	virtual int 	Run();	
+	virtual int 	Run();
+	virtual	void	Release();
 	
 protected:
 	int 				m_SockFd;

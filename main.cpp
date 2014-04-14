@@ -71,11 +71,7 @@ int start_server()
 	{
 		fprintf(stderr, "%s: server init error, return %d\n", __FUNCTION__, ret);
 	}
-	ret = g_event_thread->m_EventsMaster.AddWatch(serverp->GetFd(), EVENT_READ, serverp);
-	if(ret < 0)
-	{
-		fprintf(stderr, "%s: events AddWatch, return %d\n", __FUNCTION__, ret);
-	}
+	
 
 	u_int32_t ip2 = 0;
 	u_int16_t port2 = 9292;
@@ -84,11 +80,6 @@ int start_server()
 	if(ret < 0)
 	{
 		fprintf(stderr, "%s: server init error, return %d\n", __FUNCTION__, ret);
-	}
-	ret = g_event_thread->m_EventsMaster.AddWatch(server2p->GetFd(), EVENT_READ, server2p);
-	if(ret < 0)
-	{
-		fprintf(stderr, "%s: events AddWatch, return %d\n", __FUNCTION__, ret);
 	}
 	
 	return ret;

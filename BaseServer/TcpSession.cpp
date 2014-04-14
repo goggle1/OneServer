@@ -19,12 +19,14 @@ TcpSession::TcpSession(int fd, struct sockaddr_in * addr)
 	
 	m_StrReceived.Ptr = m_RequestBuffer;
 	m_StrReceived.Len = 0;
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
+	fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
+		m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 }
 
 TcpSession::~TcpSession()
 {	
-	fprintf(stdout, "%s: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
+	fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
+		m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 	if(m_SockFd != -1)
 	{
 		close(m_SockFd);
@@ -51,9 +53,31 @@ int TcpSession::Init()
    	int flag = ::fcntl(m_SockFd, F_GETFL, 0);
     err = ::fcntl(m_SockFd, F_SETFL, flag | O_NONBLOCK);
         
-	g_event_thread->m_EventsMaster.AddWatch(m_SockFd, EVENT_READ, this);
+	int ret = g_event_thread->m_EventsMaster.AddWatch(m_SockFd, EVENT_READ, this);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s[%p]: events AddWatch %d, return %d\n", __FUNCTION__, this, m_SockFd, ret);
+		return -1;
+	}
 	
 	return 0;
+}
+
+void TcpSession::Release()
+{
+	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
+	int ret = 0;
+	ret = g_event_thread->m_EventsMaster.DeleteWatch(m_SockFd);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s[%p]: events DeleteWatch %d, return %d\n", __FUNCTION__, this, m_SockFd, ret);
+	}
+
+	ret = g_event_thread->m_GrimReaper.EnqueDeath(this);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s[%p]: GrimReaper EnqueDeath %p, return %d\n", __FUNCTION__, this, this, ret);
+	}
 }
 
 int TcpSession::DoRead()

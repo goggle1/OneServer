@@ -9,17 +9,19 @@
 
 HttpServer::HttpServer()
 {
+	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
 }
 
 HttpServer::~HttpServer()
 {
+	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
 }
 
 int HttpServer::DoRead()
 {
 	int ret = 0;
 
-	fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
+	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
 
 	while(1)
 	{
@@ -29,7 +31,7 @@ int HttpServer::DoRead()
 		if (a_fd == -1)
 		{
 			int acceptError = errno;
-			fprintf(stderr, "%s: errno=%d, %s\n", __PRETTY_FUNCTION__, acceptError, strerror(acceptError));
+			fprintf(stderr, "%s[%p]: errno=%d, %s\n", __PRETTY_FUNCTION__, this, acceptError, strerror(acceptError));
 			if (acceptError == EAGAIN)
 			{	
 				return 0;
@@ -70,7 +72,7 @@ int HttpServer::Run()
 			return 0;
 		}
 		
-		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+		fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead(); 		
