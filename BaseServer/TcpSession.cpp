@@ -72,7 +72,7 @@ void TcpSession::Release()
 	if(ret < 0)
 	{
 		fprintf(stderr, "%s[%p]: events DeleteWatch %d, return %d\n", __FUNCTION__, this, m_SockFd, ret);
-	}
+	}	
 	*/
 
 	ret = g_event_thread->m_GrimReaper.EnqueDeath(this);
@@ -80,6 +80,7 @@ void TcpSession::Release()
 	{
 		fprintf(stderr, "%s[%p]: GrimReaper EnqueDeath %p, return %d\n", __FUNCTION__, this, this, ret);
 	}
+	
 }
 
 int TcpSession::DoRead()
@@ -157,14 +158,14 @@ int TcpSession::Run()
 	
 	while(1)
 	{		
-		u_int32_t events = 0;
+		u_int64_t events = 0;
 		ret = DequeEvents(events);
 		if(ret < 1)
 		{
 			return 0;
 		}
 		
-		fprintf(stdout, "%s: events=0x%08X\n", __PRETTY_FUNCTION__, events);
+		fprintf(stdout, "%s: events=0x%016lX\n", __PRETTY_FUNCTION__, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead();			

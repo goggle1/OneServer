@@ -70,14 +70,14 @@ int TcpServer::Run()
 	
 	while(1)
 	{		
-		u_int32_t events = 0;
+		u_int64_t events = 0;
 		ret = DequeEvents(events);
 		if(ret < 1)
 		{
 			return 0;
 		}
 		
-		fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
+		fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead(); 		

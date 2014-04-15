@@ -10,15 +10,17 @@ class GrimReaper : public Task
 public:
 	GrimReaper();
 	virtual ~GrimReaper();
-	int		Init();
-	int		EnqueDeath(Task* taskp);
-	int		DoRead();
+	int			Init();
+	int			EnqueDeath(Task* taskp);
+	int 		RemoveWatch();
+	int			DoRead();
 	virtual	int	Run();
 
 protected:
 	int 		m_Pipes[2];	
-	DEQUEH_T	m_DeathDeque;
 	OSMutex     m_Mutex;
+	DEQUEH_T	m_DeathDeque;
+	DEQUEH_T	m_DeathDeque2;
 };
 
 #endif

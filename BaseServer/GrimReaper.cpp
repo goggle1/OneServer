@@ -9,12 +9,14 @@ GrimReaper::GrimReaper()
 {
 	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
 	dequeh_init(&m_DeathDeque);	
+	dequeh_init(&m_DeathDeque2);	
 }
 
 GrimReaper::~GrimReaper()
 {
 	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
-	dequeh_release(&m_DeathDeque, task_release);	
+	dequeh_release(&m_DeathDeque, task_release);
+	dequeh_release(&m_DeathDeque2, task_release);
 }
 
 int GrimReaper::Init()
@@ -42,15 +44,12 @@ int GrimReaper::DoRead()
 		void* elementp = NULL;
 		{
 			OSMutexLocker theLocker(&m_Mutex);
-			elementp  = dequeh_remove_head(&m_DeathDeque);
+			elementp  = dequeh_remove_head(&m_DeathDeque2);
 			if(elementp == NULL)
 			{
 				return 0;
 			}
 		}
-
-		char temp[4];
-		read(m_Pipes[0], temp, 1);
 		
 		Task* taskp = (Task*)elementp;
 		fprintf(stdout, "%s[%p]: taskp=%p\n", __PRETTY_FUNCTION__, this, taskp);
@@ -65,14 +64,14 @@ int GrimReaper::Run()
 	int ret = 0;		
 	while(1)
 	{		
-		u_int32_t events = 0;
+		u_int64_t events = 0;
 		ret = DequeEvents(events);
 		if(ret < 1)
 		{
 			return 0;
 		}
 		
-		fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
+		fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead(); 		
@@ -81,4 +80,31 @@ int GrimReaper::Run()
 
 	return 0;
 }
+
+int GrimReaper::RemoveWatch()
+{		
+	OSMutexLocker theLocker(&m_Mutex);
+	while(1)
+	{			
+		void* elementp = NULL;
+		{			
+			elementp  = dequeh_remove_head(&m_DeathDeque);
+			if(elementp == NULL)
+			{
+				return 0;
+			}
+		}
+
+		char temp[4];
+		read(m_Pipes[0], temp, 1);
+		
+		Task* taskp = (Task*)elementp;
+		fprintf(stdout, "%s[%p]: taskp=%p\n", __PRETTY_FUNCTION__, this, taskp);
+		g_event_thread->m_EventsMaster.DeleteWatch(taskp->GetFd());	
+		dequeh_append(&m_DeathDeque2, elementp);
+	}
+
+	return 0;
+}
+
 

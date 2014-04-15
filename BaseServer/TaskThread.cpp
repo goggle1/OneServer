@@ -99,13 +99,21 @@ int TaskThread::Entry()
         }
         		
 		int task_ret = taskp->Run();			
-		if(task_ret == -1)
+		if(task_ret < 0)
 		{	
-			taskp->SetInvalid();			
+			if(taskp->fTimerHeapElem.IsMemberOfAnyHeap())
+			{
+				fHeap.Remove(&taskp->fTimerHeapElem);
+			}			
+			taskp->SetInvalid();
 		}
 		else if(task_ret == 0)
 		{
-			// do nothing.
+			if(taskp->fTimerHeapElem.IsMemberOfAnyHeap())
+			{
+				fHeap.Remove(&taskp->fTimerHeapElem);
+			}
+			taskp->Detach();			
 		}
 		else if(task_ret > 0)
 		{

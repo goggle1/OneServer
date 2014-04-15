@@ -45,11 +45,7 @@ int EventThread::Entry()
 				}
 				else
 				{
-					int ret = taskp->EnqueEvents(events[index].events);
-					if(ret < 0)
-					{
-						m_EventsMaster.DeleteWatch(taskp->GetFd());
-					}
+					taskp->EnqueEvents(events[index].events);					
 				}
 			}
 		}
@@ -59,6 +55,7 @@ int EventThread::Entry()
 		}
 		if(GrimReaper_is_called)
 		{
+			m_GrimReaper.RemoveWatch();
 			m_GrimReaper.EnqueEvents(EVENT_READ);
 		}		
 		

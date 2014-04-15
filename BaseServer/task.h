@@ -14,8 +14,8 @@ public:
 	Task();
 	virtual ~Task();	
 	int				GetFd() { return m_SockFd; };
-	int 			EnqueEvents(u_int32_t events);
-	int				DequeEvents(u_int32_t& events);
+	int 			EnqueEvents(u_int64_t events);
+	int				DequeEvents(u_int64_t& events);
 	int				SetInvalid();
 	virtual int 	Run() = 0;
 	// sub class do Release(), remove event source, remove timer.

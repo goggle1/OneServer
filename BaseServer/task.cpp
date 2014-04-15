@@ -35,12 +35,13 @@ int Task::Attach()
 
 void Task::Detach()
 {
+	OSMutexLocker theLocker(&fMutex);
 	m_task_thread = NULL;
 }
 
-int Task::EnqueEvents(u_int32_t events)
+int Task::EnqueEvents(u_int64_t events)
 {	
-	fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
+	fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
 	OSMutexLocker theLocker(&fMutex);
 	if(m_IsValid)
 	{
@@ -52,19 +53,19 @@ int Task::EnqueEvents(u_int32_t events)
 	return -1;
 }
 
-int Task::DequeEvents(u_int32_t& events)
+int Task::DequeEvents(u_int64_t& events)
 {
 	OSMutexLocker theLocker(&fMutex);	
 	void* elementp = dequeh_remove_head(&m_EventsQueue);
 	if(elementp == NULL)
 	{
 		fprintf(stdout, "%s[%p]: events=[null], thread=%p\n", __PRETTY_FUNCTION__, this, m_task_thread);
-		this->Detach();
+		//this->Detach();
 		return 0;
 	}
 	
-	events = (u_int32_t)(u_int64_t)elementp;
-	fprintf(stdout, "%s[%p]: events=0x%08X\n", __PRETTY_FUNCTION__, this, events);
+	events = (u_int64_t)elementp;
+	fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
 	return 1;		
 }
 
@@ -77,7 +78,7 @@ void Task::Release()
 int Task::SetInvalid()
 {
 	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
-	OSMutexLocker theLocker(&fMutex);
+	//OSMutexLocker theLocker(&fMutex);
 	if(m_IsValid)
 	{
 		m_IsValid = false;
