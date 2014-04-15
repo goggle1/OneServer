@@ -591,6 +591,19 @@ bool HttpSession::SendDone()
 
 	if(m_ReadCount == fContentLen)
 	{
+	#if USE_FILE_BUFFER
+		if(m_CFile != NULL)
+		{
+			delete m_CFile;
+			m_CFile = NULL;
+		}
+	#else
+		if(fFd != -1)
+		{
+			close(fFd);
+			fFd = -1;
+		}
+	#endif
 		return true;
 	}
 
