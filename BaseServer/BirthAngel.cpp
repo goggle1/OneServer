@@ -37,6 +37,8 @@ int BirthAngel::EnqueBirth(Task * taskp)
 
 int BirthAngel::GiveBirth()
 {
+	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
+	
 	OSMutexLocker theLocker(&m_Mutex);
 	while(1)
 	{	

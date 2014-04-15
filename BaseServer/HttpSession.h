@@ -8,6 +8,9 @@
 
 #define USE_FILE_BUFFER 1
 
+//ms
+#define SEND_INTERVAL	10
+
 class HttpSession : public TcpSession
 {
 public:
@@ -26,6 +29,7 @@ protected:
 	int 		ResponseError(HTTPStatusCode status_code);
 	int		    RecvData();
 	int		    SendData();
+	bool		SendDone();
 	void        MoveOnRequest();
 	
 	HttpRequest 	m_Request;
@@ -44,13 +48,14 @@ protected:
 	StrPtrLen	fStrRemained;
 	// 
 	StringFormatter 	fResponse;
-	u_int32_t			fContentLen;
+	u_int64_t			fContentLen;
 	// file
 #if USE_FILE_BUFFER
-	CFile*		m_CFile;
+	CFile*				m_CFile;
 #else
-	int			fFd;
+	int					fFd;
 #endif
+	u_int64_t			m_ReadCount;
 	char		fBuffer[kReadBufferSize];
 	bool		fHaveRange;
 	int64_t		fRangeStart;

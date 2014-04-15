@@ -41,7 +41,7 @@ void Task::Detach()
 
 int Task::EnqueEvents(u_int64_t events)
 {	
-	fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
+	fprintf(stdout, "%s[%p]: events=0x%lx\n", __PRETTY_FUNCTION__, this, events);
 	OSMutexLocker theLocker(&fMutex);
 	if(m_IsValid)
 	{
@@ -60,12 +60,11 @@ int Task::DequeEvents(u_int64_t& events)
 	if(elementp == NULL)
 	{
 		fprintf(stdout, "%s[%p]: events=[null], thread=%p\n", __PRETTY_FUNCTION__, this, m_task_thread);
-		//this->Detach();
 		return 0;
 	}
 	
 	events = (u_int64_t)elementp;
-	fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
+	fprintf(stdout, "%s[%p]: events=0x%lx\n", __PRETTY_FUNCTION__, this, events);
 	return 1;		
 }
 

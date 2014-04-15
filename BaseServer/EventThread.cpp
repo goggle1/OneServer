@@ -31,23 +31,20 @@ int EventThread::Entry()
 		bool GrimReaper_is_called = false;
 		int num = epoll_wait(m_EventsMaster.m_epoll_fd, events, MAX_EVENTS, WAIT_PERIOD);
 		for(int index = 0; index < num; ++index) 
-		{
-			if( events[index].events & EPOLLIN)
-			{			 
-				Task* taskp = (Task*)events[index].data.ptr;
-				if(taskp == &m_BirthAngel)
-				{
-					BirthAngel_is_called = true;
-				}
-				else if(taskp == &m_GrimReaper)
-				{
-					GrimReaper_is_called = true;
-				}
-				else
-				{
-					taskp->EnqueEvents(events[index].events);					
-				}
+		{			 
+			Task* taskp = (Task*)events[index].data.ptr;
+			if(taskp == &m_BirthAngel)
+			{
+				BirthAngel_is_called = true;
 			}
+			else if(taskp == &m_GrimReaper)
+			{
+				GrimReaper_is_called = true;
+			}
+			else
+			{
+				taskp->EnqueEvents(events[index].events);					
+			}		
 		}
 		if(BirthAngel_is_called)
 		{

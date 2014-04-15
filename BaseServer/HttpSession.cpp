@@ -355,6 +355,7 @@ HttpSession::HttpSession(int fd, struct sockaddr_in * addr) :
 #else
 	fFd		= -1;
 #endif
+	m_ReadCount = 0;
 	fHaveRange 	= false;
 	fRangeStart = 0;
 	fRangeStop 	= -1;
@@ -466,7 +467,7 @@ int HttpSession::SendData()
 	    }  	
 	    else
 	    {
-	    	return 1;
+	    	return SEND_INTERVAL;
 	    }
     }
     else
@@ -476,7 +477,7 @@ int HttpSession::SendData()
             __PRETTY_FUNCTION__, this, should_send_len, ret, err, strerror(err));
         if(err == EAGAIN)
         {
-        	return 1;
+        	return SEND_INTERVAL;
         }
         else // EPIPE, ECONNRESET
         {
@@ -583,6 +584,19 @@ int HttpSession::ResponseError(HTTPStatusCode status_code)
 
 }
 
+
+bool HttpSession::SendDone()
+{
+	bool ret = false;
+
+	if(m_ReadCount == fContentLen)
+	{
+		return true;
+	}
+
+	return ret;
+}
+
 #if USE_FILE_BUFFER
 int HttpSession::ResponseFile(char* abs_path)
 {
@@ -595,7 +609,7 @@ int HttpSession::ResponseFile(char* abs_path)
 		ret = ResponseError(fHttpStatus);
 		return ret;
 	}	
-	
+	m_ReadCount = 0;
 	
 	off_t file_len = m_CFile->GetFileLength();	
 	if(fRangeStop == -1)
@@ -675,7 +689,8 @@ int HttpSession::ResponseFile(char* abs_path)
 		fHttpStatus = httpInternalServerError;
 		ret = ResponseError(fHttpStatus);
 		return ret;
-	}	
+	}
+	m_ReadCount = 0;
 	
 	off_t file_len = lseek(fFd, 0L, SEEK_END);	
 	if(fRangeStop == -1)
@@ -817,17 +832,14 @@ int HttpSession::DoRead()
 			return ret;
 		}
 
-		#if USE_FILE_BUFFER
-		if(m_CFile != NULL)
+		if(!SendDone())
 		{
-			return 1;
+			return SEND_INTERVAL;
 		}
-		#else
-		if(fFd != -1)
-		{
-			return 1;			
-		}
-		#endif
+
+		ret = DoContinue();
+		return ret;
+		
 	}	
 
 	return 0;
@@ -851,7 +863,7 @@ int HttpSession::DoContinue()
 		buffer_availiable.Len = kResponseBufferSizeInBytes - fStrRemained.Len;
 		if(buffer_availiable.Len <= 0)
 		{
-			return 1;
+			return SEND_INTERVAL;
 		}
 		
 		ssize_t read_len = m_CFile->Read(buffer_availiable.Ptr, buffer_availiable.Len);
@@ -877,10 +889,12 @@ int HttpSession::DoContinue()
 			fprintf(stdout, "%s[%p]: read want=%d, ret=%ld, [read -> end_of_file]\n", 
 				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
 			fStrRemained.Len += read_len;
+			m_ReadCount += read_len;
 		}
 		else
 		{
 			fStrRemained.Len += read_len;
+			m_ReadCount += read_len;
 		}
 		
 		ret = SendData();
@@ -890,9 +904,9 @@ int HttpSession::DoContinue()
 		}
 	}
 
-	if(m_CFile != NULL)
-	{
-		return 1;
+	if(!SendDone())
+	{		
+		return SEND_INTERVAL;
 	}
 		
 	return 0;
@@ -940,10 +954,12 @@ int HttpSession::DoContinue()
 			fprintf(stdout, "%s[%p]: read want=%d, ret=%d, [?]\n", 
 				__PRETTY_FUNCTION__, this, buffer_availiable.Len, read_len);
 			fStrRemained.Len += read_len;
+			m_ReadCount += read_len;
 		}
 		else
 		{
 			fStrRemained.Len += read_len;
+			m_ReadCount += read_len;
 		}
 		
 		ret = SendData();
@@ -953,9 +969,9 @@ int HttpSession::DoContinue()
 		}
 	}
 
-	if(fFd != -1)
-	{
-		return 1;
+	if(!SendDone())
+	{		
+		return SEND_INTERVAL;
 	}
 		
 	return 0;
@@ -975,7 +991,7 @@ int HttpSession::Run()
 			return 0;
 		}
 		
-		fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
+		fprintf(stdout, "%s[%p]: events=0x%lx\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead();			

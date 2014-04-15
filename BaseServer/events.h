@@ -10,7 +10,7 @@
 
 
 #define EPOLL_SIZE 		1000000
-#define MAX_EVENTS		10000
+#define MAX_EVENTS		1000
 // ms
 #define WAIT_PERIOD		1000
 

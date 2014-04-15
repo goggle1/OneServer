@@ -67,14 +67,6 @@ void TcpSession::Release()
 {
 	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
 	int ret = 0;
-	/*
-	ret = g_event_thread->m_EventsMaster.DeleteWatch(m_SockFd);
-	if(ret < 0)
-	{
-		fprintf(stderr, "%s[%p]: events DeleteWatch %d, return %d\n", __FUNCTION__, this, m_SockFd, ret);
-	}	
-	*/
-
 	ret = g_event_thread->m_GrimReaper.EnqueDeath(this);
 	if(ret < 0)
 	{
@@ -146,7 +138,7 @@ int TcpSession::DoTimeout()
 {
 	int ret = 0;
 
-	fprintf(stdout, "%s\n", __PRETTY_FUNCTION__);
+	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
 	
 	return -1;
 }
@@ -165,7 +157,7 @@ int TcpSession::Run()
 			return 0;
 		}
 		
-		fprintf(stdout, "%s: events=0x%016lX\n", __PRETTY_FUNCTION__, events);
+		fprintf(stdout, "%s: events=0x%lx\n", __PRETTY_FUNCTION__, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead();			
