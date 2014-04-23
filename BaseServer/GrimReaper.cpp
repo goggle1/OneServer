@@ -28,6 +28,10 @@ int GrimReaper::Init()
 
 int GrimReaper::EnqueDeath(Task * taskp)
 {
+	g_event_thread->m_EventsMaster.DeleteWatch(taskp->GetFd());	
+	delete taskp;
+	return 0;
+	
 	fprintf(stdout, "%s[%p]: taskp=%p\n", __PRETTY_FUNCTION__, this, taskp);
 	{
 		OSMutexLocker theLocker(&m_Mutex);
@@ -86,6 +90,8 @@ int GrimReaper::Run()
 
 int GrimReaper::RemoveWatch()
 {		
+	return 0;
+	
 	fprintf(stdout, "%s[%p]: \n", __PRETTY_FUNCTION__, this);
 	
 	OSMutexLocker theLocker(&m_Mutex);

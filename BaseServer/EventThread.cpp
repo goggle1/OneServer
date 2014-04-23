@@ -26,35 +26,36 @@ int EventThread::Entry()
 	
 	struct epoll_event events[MAX_EVENTS];
 	while(1)
-	{	
-		bool BirthAngel_is_called = false;
-		bool GrimReaper_is_called = false;
+	{
 		int num = epoll_wait(m_EventsMaster.m_epoll_fd, events, MAX_EVENTS, WAIT_PERIOD);
 		for(int index = 0; index < num; ++index) 
 		{			 
-			Task* taskp = (Task*)events[index].data.ptr;
-			if(taskp == &m_BirthAngel)
+			Task* taskp = (Task*)events[index].data.ptr;	
+			if(events[index].events & EPOLLERR)
 			{
-				BirthAngel_is_called = true;
+				m_EventsMaster.DeleteWatch(taskp->GetFd());
+				delete taskp;
+				continue;
 			}
-			else if(taskp == &m_GrimReaper)
-			{
-				GrimReaper_is_called = true;
+		
+			if(taskp == &m_BirthAngel)
+			{			
+				m_BirthAngel.Run();
 			}
 			else
-			{
-				taskp->EnqueEvents(events[index].events);					
-			}		
-		}
-		if(BirthAngel_is_called)
-		{
-			m_BirthAngel.GiveBirth();
-		}
-		if(GrimReaper_is_called)
-		{
-			m_GrimReaper.RemoveWatch();
-			m_GrimReaper.EnqueEvents(EVENT_READ);
-		}		
+			{				
+				if(taskp->IsServer())
+				{
+					// do nothing.
+					//m_EventsMaster.ModifyWatch(taskp->GetFd(), 0, taskp);
+				}
+				else
+				{
+					m_EventsMaster.ModifyWatch(taskp->GetFd(), 0, taskp);	
+				}
+				taskp->EnqueEvents(events[index].events);
+			}
+		}			
 		
 	}	
 	

@@ -19,14 +19,14 @@ TcpSession::TcpSession(int fd, struct sockaddr_in * addr)
 	
 	m_StrReceived.Ptr = m_RequestBuffer;
 	m_StrReceived.Len = 0;
-	fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
-		m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
+	//fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
+	//	m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 }
 
 TcpSession::~TcpSession()
 {	
-	fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
-		m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
+	//fprintf(stdout, "%s[%p]: fd=%d, 0x%08X:%u\n", __PRETTY_FUNCTION__, this, 
+	//	m_SockFd, m_SockAddr.sin_addr.s_addr, m_SockAddr.sin_port);
 	if(m_SockFd != -1)
 	{
 		close(m_SockFd);
@@ -49,10 +49,16 @@ int TcpSession::Init()
     err = ::setsockopt(m_SockFd, SOL_SOCKET, SO_SNDBUF, (char*)&sndBufSize, sizeof(int));
     //AssertV(err == 0, OSThread::GetErrno());
 
+	struct linger              linger;
+    linger.l_onoff = 1;
+    linger.l_linger = 0;
+    err = ::setsockopt(m_SockFd, SOL_SOCKET, SO_LINGER, (const void *) &linger, sizeof(struct linger));
+    
 	// InitNonBlocking
    	int flag = ::fcntl(m_SockFd, F_GETFL, 0);
     err = ::fcntl(m_SockFd, F_SETFL, flag | O_NONBLOCK);
-        
+
+    m_event_mask = EVENT_READ;
 	int ret = g_event_thread->m_BirthAngel.EnqueBirth(this);
 	if(ret < 0)
 	{

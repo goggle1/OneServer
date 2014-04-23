@@ -101,29 +101,17 @@ int TaskThread::Entry()
 		int task_ret = taskp->Run();			
 		if(task_ret < 0)
 		{	
-			if(taskp->fTimerHeapElem.IsMemberOfAnyHeap())
-			{
-				fHeap.Remove(&taskp->fTimerHeapElem);
-			}			
-			taskp->SetInvalid();
+			delete taskp;
 		}
 		else if(task_ret == 0)
 		{
-			if(taskp->fTimerHeapElem.IsMemberOfAnyHeap())
-			{
-				fHeap.Remove(&taskp->fTimerHeapElem);
-			}
 			taskp->Detach();			
 		}
 		else if(task_ret > 0)
 		{
 			taskp->fTimerHeapElem.SetValue(OS::Milliseconds() + task_ret);
             fHeap.Insert(&taskp->fTimerHeapElem);			
-		}	
-		else
-		{
-			fprintf(stdout, "%s: taskp->Run() return %d\n", __PRETTY_FUNCTION__, task_ret);
-		}
+		}			
 		
 	}
 	

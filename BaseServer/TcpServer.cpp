@@ -12,7 +12,7 @@
 #include "EventThread.h"
 #include "TcpServer.h"
 
-TcpServer::TcpServer()
+TcpServer::TcpServer() : Task(true)
 {
 	m_SockFd = -1;
 	fprintf(stdout, "%s[%p]:\n", __PRETTY_FUNCTION__, this);
@@ -40,6 +40,7 @@ int TcpServer::DoRead()
 	        fprintf(stderr, "%s[%p]: errno=%d, %s\n", __PRETTY_FUNCTION__, this, acceptError, strerror(acceptError));
 	        if (acceptError == EAGAIN)
 	        {   
+	        	//RequestEvent(EVENT_READ);
 	            return 0;
 	        }		        
 			else if (acceptError == EMFILE || acceptError == ENFILE)
@@ -77,7 +78,7 @@ int TcpServer::Run()
 			return 0;
 		}
 		
-		fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
+		fprintf(stdout, "%s[%p]: events=0x%lx\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
 			ret = DoRead(); 		
@@ -128,13 +129,13 @@ int TcpServer::Init(u_int32_t ip, u_int16_t port)
 
     int bufSize = 96*1024;
     ret = ::setsockopt(m_SockFd, SOL_SOCKET, SO_RCVBUF, (char*)&bufSize, sizeof(int));
-    if(m_SockFd < 0)
+    if(ret < 0)
 	{
 		return -4;
 	}
 
-    ret = ::listen(m_SockFd, 100);
-    if(m_SockFd < 0)
+    ret = ::listen(m_SockFd, 511);    
+    if(ret < 0)
 	{
 		return -5;
 	}

@@ -52,6 +52,32 @@ int Events::AddWatch(int fd, u_int32_t events, void* handler)
 	return ret;
 }
 
+int Events::ModifyWatch(int fd, u_int32_t events, void* handler)
+{
+	int ret = 0;
+	
+	struct epoll_event epoll_event = {0};	
+	epoll_event.events = 0;	
+	if(events&EVENT_READ)
+	{
+		epoll_event.events |= (EPOLLET|EPOLLIN);
+	}
+	if(events&EVENT_WRITE)
+	{
+		epoll_event.events |= (EPOLLET|EPOLLOUT);
+	}
+
+	epoll_event.data.ptr = handler;
+	
+	ret = epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, fd, &epoll_event);
+	if(ret < 0)
+	{
+		fprintf(stderr, "%s: epoll_ctl mod %d return %d, errno=%d, %s\n", __PRETTY_FUNCTION__, fd, ret, errno, strerror(errno));
+	}
+	
+	return ret;
+}
+
 int Events::DeleteWatch(int fd)
 {
 	int ret = 0;
@@ -59,7 +85,7 @@ int Events::DeleteWatch(int fd)
 	ret = epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	if(ret < 0)
 	{
-		fprintf(stderr, "%s: epoll_ctl add %d return %d, errno=%d, %s\n", __PRETTY_FUNCTION__, fd, ret, errno, strerror(errno));
+		fprintf(stderr, "%s: epoll_ctl del %d return %d, errno=%d, %s\n", __PRETTY_FUNCTION__, fd, ret, errno, strerror(errno));
 	}
 	
 	return ret;

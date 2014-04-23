@@ -424,6 +424,7 @@ int HttpSession::RecvData()
 			fprintf(stderr, "%s[%p]: errno=%d, %s\n", __PRETTY_FUNCTION__, this, err, strerror(err));
 			if(err == EAGAIN) // or other errno
 			{
+				RequestEvent(EVENT_READ);
 				return 0;
 			}
 			else
@@ -467,7 +468,9 @@ int HttpSession::SendData()
 	    }  	
 	    else
 	    {
+	    	RequestEvent(EVENT_READ|EVENT_WRITE);
 	    	return SEND_INTERVAL;
+	    	//return 0;
 	    }
     }
     else
@@ -477,7 +480,9 @@ int HttpSession::SendData()
             __PRETTY_FUNCTION__, this, should_send_len, ret, err, strerror(err));
         if(err == EAGAIN)
         {
+        	RequestEvent(EVENT_READ|EVENT_WRITE);
         	return SEND_INTERVAL;
+        	//return 0;
         }
         else // EPIPE, ECONNRESET
         {
@@ -784,16 +789,14 @@ int HttpSession::DoGet()
 	char abs_path[PATH_MAX];
 	snprintf(abs_path, PATH_MAX, "%s%s", WORK_PATH, m_Request.fRequestPath);
 	abs_path[PATH_MAX-1] = '\0';		
-	if(file_exist(abs_path))
-	{
-		ret = ResponseFile(abs_path);
-	}
-	else
-	{
+	if(!file_exist(abs_path))
+	{	
 		fHttpStatus = httpNotFound;
 		ret = ResponseError(fHttpStatus);		
+		return ret;
 	}	
-	
+
+	ret = ResponseFile(abs_path);	
 	return ret;
 }
 
@@ -840,23 +843,52 @@ int HttpSession::DoRead()
 		}
 
 		ret = SendData();
-		if(ret != 0)
+		if(ret < 0)
 		{
 			return ret;
 		}
-
-		if(!SendDone())
+		else if(ret > 0)
 		{
-			return SEND_INTERVAL;
+			return 0;
 		}
 
-		ret = DoContinue();
-		return ret;
+		while(!SendDone())
+		{
+			ret = DoContinue();
+			if(ret < 0)
+			{
+				return ret;
+			}
+			else if(ret > 0)
+			{
+				return ret;
+			}
+		}
 		
 	}	
 
 	return 0;
 	
+}
+
+int HttpSession::DoWrite()
+{
+	int ret = 0;
+	
+	while(!SendDone())
+	{
+		ret = DoContinue();
+		if(ret < 0)
+		{
+			return ret;
+		}
+		else if(ret > 0)
+		{
+			return ret;
+		}
+	}
+
+	return ret;
 }
 
 #if USE_FILE_BUFFER
@@ -995,21 +1027,25 @@ int HttpSession::Run()
 {	
 	int ret = 0;
 	
-	while(1)
+	//while(1)
 	{		
 		u_int64_t events = 0;
-		ret = DequeEvents(events);
-		if(ret < 1)
-		{
-			return 0;
-		}
+		ret = DequeEvents(events);		
 		
 		fprintf(stdout, "%s[%p]: events=0x%lx\n", __PRETTY_FUNCTION__, this, events);
+		if(events & EPOLLERR)
+		{
+			return -1;
+		}
 		if(events & EVENT_READ)
 		{
 			ret = DoRead();			
 		}
-		else if(events & EVENT_CONTINUE)
+		if(events & EVENT_WRITE)
+		{
+			ret = DoWrite();
+		}
+		if(events & EVENT_CONTINUE)
 		{
 			ret = DoContinue();	
 			fprintf(stdout, "%s[%p]: DoContinue() ret=%d\n", __PRETTY_FUNCTION__, this, ret);		
@@ -1019,9 +1055,17 @@ int HttpSession::Run()
 			//ret = DoTimeout();			
 		}
 		
-		if(ret != 0)
+		if(ret < 0)
 		{
 			return ret;
+		}
+		else if(ret > 0)
+		{
+			return 0;
+		}
+		else
+		{
+			// continue;
 		}
 	}
 	

@@ -32,8 +32,13 @@ int HttpServer::DoRead()
 		{
 			int acceptError = errno;
 			fprintf(stderr, "%s[%p]: errno=%d, %s\n", __PRETTY_FUNCTION__, this, acceptError, strerror(acceptError));
-			if (acceptError == EAGAIN)
+			if(acceptError == EINTR)
+			{
+				// continue;
+			}
+			else if (acceptError == EAGAIN)
 			{	
+				//RequestEvent(EVENT_READ);
 				return 0;
 			}				
 			else if (acceptError == EMFILE || acceptError == ENFILE)
@@ -42,7 +47,7 @@ int HttpServer::DoRead()
 			}
 			else
 			{
-				// do nothing.
+				// continue ?
 			}
 		}
 		else
@@ -63,25 +68,29 @@ int HttpServer::Run()
 {	
 	int ret = 0;
 	
-	while(1)
+	//while(1)
 	{		
 		u_int64_t events = 0;
-		ret = DequeEvents(events);
-		if(ret < 1)
-		{
-			return 0;
-		}
+		ret = DequeEvents(events);		
 		
-		fprintf(stdout, "%s[%p]: events=0x%016lX\n", __PRETTY_FUNCTION__, this, events);
+		fprintf(stdout, "%s[%p]: events=0x%lx\n", __PRETTY_FUNCTION__, this, events);
 		if(events & EVENT_READ)
 		{
-			ret = DoRead(); 		
+			ret = DoRead(); 					
 		}
 		// else(other event)
 		
 		if(ret < 0)
 		{
 			return ret;
+		}
+		else if(ret > 0)
+		{
+			return ret;
+		}
+		else
+		{
+			// continue;
 		}
 	}
 	

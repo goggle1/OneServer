@@ -19,6 +19,7 @@ public:
 
 	virtual int 	Run();
 	virtual int 	DoRead();
+	virtual int 	DoWrite();
 	virtual	int		DoContinue();
 	virtual bool 	IsFullRequest();
 	virtual int		DoRequest();	

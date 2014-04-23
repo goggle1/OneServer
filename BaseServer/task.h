@@ -11,11 +11,14 @@ class TaskThread;
 class Task
 {
 public:
-	Task();
+	Task(bool is_server = false);
 	virtual ~Task();	
-	int				GetFd() { return m_SockFd; };
+	int				GetFd() 			{ return m_SockFd; };
+	u_int32_t		GetEventMask()	{ return m_event_mask; };
+	bool			IsServer()		{ return m_is_server; };
 	int 			EnqueEvents(u_int64_t events);
 	int				DequeEvents(u_int64_t& events);
+	int				RequestEvent(u_int64_t event);
 	int				SetInvalid();
 	virtual int 	Run() = 0;
 	// sub class do Release(), remove event source, remove timer.
@@ -26,6 +29,10 @@ protected:
 	void 			Detach();
 	int 			m_SockFd;
 	TaskThread*		m_task_thread;
+	bool			m_is_server;
+
+	u_int64_t		m_events;
+	u_int32_t		m_event_mask;
 	
 	DEQUEH_T 	m_EventsQueue;	
     OSMutex     fMutex;
